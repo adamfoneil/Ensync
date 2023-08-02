@@ -15,10 +15,16 @@ public enum IndexType
     UniqueConstraint = 3,
     NonUnique = 4
 }
+
 public class Index : DbObject
 {
-    public override ObjectType Type => ObjectType.Index;
+    public override DbObjectType Type => DbObjectType.Index;
     public IndexType IndexType { get; init; }
-    public SortDirection SortDirection { get; init; }
-    public HashSet<string> Columns { get; set; } = new HashSet<string>();
+    public required HashSet<Column> Columns { get; init; }
+
+    public class Column
+    {
+        public required string Name { get; init; }
+        public SortDirection Direction { get; init; }
+    }
 }
