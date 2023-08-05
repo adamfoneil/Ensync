@@ -4,6 +4,8 @@ public abstract class SqlDialect
 {
     public abstract Dictionary<DbObjectType, SqlStatements> Syntax { get; }
 
+    protected abstract string FormatName(DbObject dbObject);
+
     public class SqlStatements
     {
         public Func<DbObject, string>? Definition { get; init; }
