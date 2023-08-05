@@ -11,6 +11,13 @@ public enum ScriptActionType
 
 public class ScriptAction
 {
+    public ScriptAction(ScriptActionType action, DbObject @object)
+    {
+        Action = action;
+        Object = @object;
+    }
+
     public ScriptActionType Action { get; init; }
-    public required DbObject Object { get; init; }
+    public DbObject Object { get; init; }
+    public required IEnumerable<(StatementPlacement, string)> Statements { get; init; }
 }
