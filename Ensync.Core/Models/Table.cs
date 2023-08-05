@@ -15,5 +15,5 @@ public class Table : DbObject
 
     public override IEnumerable<DbObject> GetDependencies(Schema schema) => schema
         .Tables
-        .Where(t => t.ForeignKeys.Any(fk => fk.ReferencedTable.Equals(this)));
+        .SelectMany(t => t.ForeignKeys.Where(fk => fk.ReferencedTable.Equals(this)));
 }

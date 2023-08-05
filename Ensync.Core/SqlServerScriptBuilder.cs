@@ -29,6 +29,13 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
             Create = CreateIndex,
             Alter = AlterIndex,
             Drop = DropIndex
+        },
+        [DbObjectType.ForeignKey] = new()
+        {
+            Definition = ForeignKeyDefinition,
+            Create = CreateForeignKey,
+            Alter = (parent, child) => throw new NotImplementedException(),
+            Drop = DropForeignKey
         }
     };
 
