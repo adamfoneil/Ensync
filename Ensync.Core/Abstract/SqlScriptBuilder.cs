@@ -1,5 +1,4 @@
 ﻿using Ensync.Core.Models;
-using System.Diagnostics.Metrics;
 
 namespace Ensync.Core.Abstract;
 
@@ -20,6 +19,9 @@ public abstract class SqlScriptBuilder
     public abstract Dictionary<DbObjectType, SqlStatements> Syntax { get; }
 
     protected abstract string FormatName(DbObject dbObject);
+    protected abstract string FormatName(string name);
+
+    public virtual Task InspectTargetDatabaseAsync() => Task.CompletedTask;
 
     public IEnumerable<(StatementPlacement, string)> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child) => actionType switch
     {

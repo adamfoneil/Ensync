@@ -6,10 +6,12 @@ public class Schema
 {
     public IEnumerable<Table> Tables { get; set; } = Enumerable.Empty<Table>();
 
-    public IEnumerable<ScriptAction> Compare(Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    public async Task<IEnumerable<ScriptAction>> CompareAsync(Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {       
         ArgumentNullException.ThrowIfNull(nameof(targetSchema));
         ArgumentNullException.ThrowIfNull(nameof(scriptBuilder));
+
+        await scriptBuilder.InspectTargetDatabaseAsync();
 
         List<ScriptAction> results = new();
 

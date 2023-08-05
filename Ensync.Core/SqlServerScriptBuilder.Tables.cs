@@ -40,7 +40,11 @@ public partial class SqlServerScriptBuilder
     {
         var table = child as Table ?? throw new Exception("Unexpected object type");
 
-        //if (!SchemaExists) create schema
+        var schema = SchemaName(child.Name);
+        if (!_schemas.Contains(schema))
+        {
+            yield return (StatementPlacement.Immediate, $"CREATE SCHEMA {FormatName(schema)}");
+        }
 
         yield return
             (StatementPlacement.Immediate, $@"CREATE TABLE {FormatName(child)} (
@@ -49,17 +53,26 @@ public partial class SqlServerScriptBuilder
 
         foreach (var index in table.Indexes)
         {
-
+            // create index or alter table add constraint
         }
 
         foreach (var check in table.CheckConstraints)
         {
-
+            // alter table add constraint
         }
 
         foreach (var fk in table.ForeignKeys)
         {
-            // if referenced table exists, return deferred statements
+            var tableName = ParseTableName(fk.ReferencedTable.Name);
+            if (_tables.Contains((tableName.Schema, tableName.Name)))
+            {
+                string referencingColumns = string.Join(", ", fk.Columns.Select(col => FormatName(col.ReferencingName)));
+                string referencedColumns = string.Join(", ", fk.Columns.Select(col => FormatName(col.ReferencedName)));
+                var result = $"ALTER TABLE {FormatName(child)} ADD CONSTRAINT {FormatName(fk)} FOREIGN KEY ({referencingColumns}) REFERENCES {FormatName(fk.ReferencedTable)} ({referencedColumns})";
+                if (fk.CascadeDelete) result += " ON DELETE CASCADE";
+                if (fk.CascadeUpdate) result += " ON UPDATE CASCADE";
+                yield return (StatementPlacement.Deferred, result);
+            }
         }
     }
 

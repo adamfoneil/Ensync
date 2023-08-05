@@ -1,11 +1,19 @@
-﻿using Ensync.Core.Abstract;
+﻿using Dapper;
+using Ensync.Core.Abstract;
+using Microsoft.Data.SqlClient;
 
 namespace Ensync.Core;
 
 public partial class SqlServerScriptBuilder : SqlScriptBuilder
 {
-    public SqlServerScriptBuilder()
-    {            
+    private readonly string _connectionString;
+
+    private HashSet<string> _schemas = new();
+    private HashSet<(string, string)> _tables = new();
+
+    public SqlServerScriptBuilder(string connectionString)
+    {
+        _connectionString = connectionString;
     }
 
     public override Dictionary<DbObjectType, SqlStatements> Syntax => new()
@@ -39,15 +47,34 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
         }
     };
 
-    protected override string FormatName(DbObject dbObject)
+    protected override string FormatName(DbObject dbObject) => FormatName(dbObject.Name);
+
+    protected override string FormatName(string name)
     {
-        var parts = dbObject.Name.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+        var parts = name.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
         return string.Join(".", parts.Select(part => $"[{part.Trim()}]"));
     }
 
-    private async Task<bool> SchemaExistsAsync(string schemaName)
+    public override async Task InspectTargetDatabaseAsync()
     {
-        throw new NotImplementedException();
+        using var cn = new SqlConnection(_connectionString);
+        _schemas = (await cn.QueryAsync<string>("SELECT [name] FROM [sys].[schemas]")).ToHashSet();
+        _tables = (await cn.QueryAsync<(string, string)>("SELECT SCHEMA_NAME([schema_id]), [name] FROM [sys].[tables]")).ToHashSet();
+    }
+
+    private (string Schema, string Name) ParseTableName(string name)
+    {
+        var parts = name.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+        return
+            (parts.Length == 2) ? (parts[0], parts[1]) :
+            (parts.Length == 1) ? ("dbo", parts[0]) :
+            throw new Exception("Unexpected table name format");
+    }
+
+    private async Task<bool> SchemaExistsAsync(string tableName)
+    {
+        var result = ParseTableName(tableName);
+        return await RowExistsAsync("[sys].[schema] WHERE [name]=@schema", new { result.Schema });
     }
 
     private async Task<long> GetRowCountAsync(string tableName)
@@ -57,6 +84,19 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
 
     private async Task<bool> TableExistsAsyc(string tableName)
     {
-        throw new NotImplementedException();
+        var result = ParseTableName(tableName);
+        return await RowExistsAsync("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new 
+        {
+            result.Schema,
+            result.Name
+        });
     }
+        
+    private async Task<bool> RowExistsAsync(string fromWhere, object parameters)
+    {
+        using var cn = new SqlConnection(_connectionString);
+        return await cn.QuerySingleOrDefaultAsync<int>($"SELECT 1 {fromWhere}", parameters) == 1;
+    }
+
+
 }

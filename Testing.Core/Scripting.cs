@@ -1,6 +1,6 @@
 ﻿using Ensync.Core;
 using Ensync.Core.Models;
-
+using SqlServer.LocalDb;
 using Index = Ensync.Core.Models.Index;
 
 namespace Testing.Core;
@@ -8,8 +8,14 @@ namespace Testing.Core;
 [TestClass]
 public class Scripting
 {
+    [ClassInitialize]
+    public static void Startup(TestContext testContext)
+    {
+        using var cn = LocalDb.GetConnection(Tables.DbName);
+    }
+
     [TestMethod]
-    public void CreateTables()
+    public async Task CreateTables()
     {
         Table employeeTypeTable = new()
         {
@@ -69,7 +75,7 @@ public class Scripting
 
         var target = new Schema();
 
-        var scriptBuilder = new SqlServerScriptBuilder();
-        var script = source.Compare(target, scriptBuilder).ToArray(); 
+        var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(Tables.DbName));
+        var script = (await source.CompareAsync(target, scriptBuilder)).ToArray(); 
     }
 }
