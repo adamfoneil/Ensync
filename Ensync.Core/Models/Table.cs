@@ -12,4 +12,8 @@ public class Table : DbObject
     public HashSet<CheckConstraint> CheckConstraints { get; init; } = new();    
 
     public long RowCount { get; init; }
+
+    public override IEnumerable<DbObject> GetDependencies(Schema schema) => schema
+        .Tables
+        .Where(t => t.ForeignKeys.Any(fk => fk.ReferencedTable.Equals(this)));
 }

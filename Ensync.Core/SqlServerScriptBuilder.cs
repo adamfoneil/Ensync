@@ -22,9 +22,16 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
             Create = AddColumn, // ALTER TABLE <parent> ADD ....
             Alter = AlterColumn, // ALTER TABLE <parent> ALTER COLUMN 
             Drop = DropColumn // ALTER TABLE <parent> DROP
+        },
+        [DbObjectType.Index] = new()
+        {
+            Definition = IndexDefinition,
+            Create = CreateIndex,
+            Alter = AlterIndex,
+            Drop = DropIndex
         }
     };
-    
+
     protected override string FormatName(DbObject dbObject)
     {
         var parts = dbObject.Name.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
@@ -37,6 +44,11 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
     }
 
     private async Task<long> GetRowCountAsync(string tableName)
+    {
+        throw new NotImplementedException();
+    }
+
+    private async Task<bool> TableExistsAsyc(string tableName)
     {
         throw new NotImplementedException();
     }

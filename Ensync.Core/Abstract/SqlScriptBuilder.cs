@@ -1,4 +1,6 @@
-﻿namespace Ensync.Core.Abstract;
+﻿using Ensync.Core.Models;
+
+namespace Ensync.Core.Abstract;
 
 public enum StatementPlacement
 {
@@ -25,12 +27,15 @@ public abstract class SqlScriptBuilder
         public required Func<DbObject?, DbObject, IEnumerable<(StatementPlacement, string)>> Alter { get; init; }
         public required Func<DbObject?, DbObject, IEnumerable<(StatementPlacement, string)>> Drop { get; init; }
 
-        public IEnumerable<(StatementPlacement, string)> GetScript(ScriptActionType actionType, DbObject? parent, DbObject child) => actionType switch
+        public IEnumerable<(StatementPlacement, string)> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child) => actionType switch
         {
             ScriptActionType.Create => Create.Invoke(parent, child),
             ScriptActionType.Alter => Alter.Invoke(parent, child), // drop dependencies, alter object, re-create dependencies
-            ScriptActionType.Drop => Drop.Invoke(parent, child), // drop dependencies, drop object
+            ScriptActionType.Drop => DropDependencies(schema, parent, child).Concat(Drop.Invoke(parent, child)), // drop dependencies, drop object
             _ => throw new NotSupportedException()
         };
+
+        private IEnumerable<(StatementPlacement, string)> DropDependencies(Schema schema, DbObject? parent, DbObject child) =>
+            child.GetDependencies(schema).SelectMany(obj => Drop(parent, obj));
     }
 }

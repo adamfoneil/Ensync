@@ -1,4 +1,6 @@
-﻿namespace Ensync.Core.Abstract;
+﻿using Ensync.Core.Models;
+
+namespace Ensync.Core.Abstract;
 
 public enum DbObjectType
 {
@@ -27,4 +29,6 @@ public abstract class DbObject
     }
 
     public override int GetHashCode() => $"{Type}.{Name.ToLower()}".GetHashCode();
+
+    public virtual IEnumerable<DbObject> GetDependencies(Schema schema) => Enumerable.Empty<DbObject>();
 }
