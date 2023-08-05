@@ -4,7 +4,7 @@ namespace Ensync.Core.Models;
 
 public class Schema
 {
-    public HashSet<Table> Tables { get; set; } = new();
+    public IEnumerable<Table> Tables { get; set; } = Enumerable.Empty<Table>();
 
     public IEnumerable<ScriptAction> Compare(Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {       

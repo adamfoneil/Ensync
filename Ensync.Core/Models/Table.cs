@@ -6,10 +6,10 @@ public class Table : DbObject
 {
     public override DbObjectType Type => DbObjectType.Table;
 
-    public HashSet<Column> Columns { get; init; } = new();
-    public HashSet<Index> Indexes { get; init; } = new();
-    public HashSet<ForeignKey> ForeignKeys { get; init; } = new();
-    public HashSet<CheckConstraint> CheckConstraints { get; init; } = new();    
+    public IEnumerable<Column> Columns { get; init; } = Enumerable.Empty<Column>();
+    public IEnumerable<Index> Indexes { get; init; } = Enumerable.Empty<Index>();
+    public IEnumerable<ForeignKey> ForeignKeys { get; init; } = Enumerable.Empty<ForeignKey>();
+    public IEnumerable<CheckConstraint> CheckConstraints { get; init; } = Enumerable.Empty<CheckConstraint>();    
 
     public long RowCount { get; init; }
 

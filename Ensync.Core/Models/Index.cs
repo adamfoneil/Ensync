@@ -20,7 +20,7 @@ public class Index : DbObject
 {
     public override DbObjectType Type => DbObjectType.Index;
     public IndexType IndexType { get; init; }
-    public required HashSet<Column> Columns { get; init; }
+    public required IEnumerable<Column> Columns { get; init; }
 
     public class Column
     {
