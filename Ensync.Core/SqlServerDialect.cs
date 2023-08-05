@@ -10,7 +10,7 @@ public class SqlServerDialect : SqlDialect
         [DbObjectType.Table] = new()
         {            
             Create = CreateTable,            
-            Alter = (obj) => throw new NotSupportedException(),
+            Alter = (parent, child) => throw new NotSupportedException(),
             Drop = DropTable
         },
         [DbObjectType.Column] = new()
@@ -22,10 +22,10 @@ public class SqlServerDialect : SqlDialect
         }
     };
 
-    private IEnumerable<string> AlterColumn(DbObject @object)
+    private IEnumerable<string> AlterColumn(DbObject? parent, DbObject child)
     {
-        var column = @object as Column ?? throw new Exception("Unexpected object type");
-        yield return $"ALTER TABLE <table> ALTER COLUMN {ColumnDefinition(column)}";
+        var column = child as Column ?? throw new Exception("Unexpected object type");
+        yield return $"ALTER TABLE {parent} ALTER COLUMN {ColumnDefinition(column)}";
     }
 
     private string ColumnDefinition(DbObject @object)
@@ -34,36 +34,36 @@ public class SqlServerDialect : SqlDialect
         return $"[{column.Name}] {column.DataType} {(column.IsNullable ? "NULL" : "NOT NULL")}";
     }
 
-    private IEnumerable<string> DropColumn(DbObject @object)
+    private IEnumerable<string> DropColumn(DbObject? parent, DbObject @object)
     {
         var column = @object as Column ?? throw new Exception("Unexpected object type");
         yield return $"ALTER TABLE <table> DROP COLUMN [{column.Name}]";
     }
 
-    private IEnumerable<string> AddColumn(DbObject @object)
+    private IEnumerable<string> AddColumn(DbObject? parent, DbObject child)
     {
-        var column = @object as Column ?? throw new Exception("Unexpected object type");
-        yield return $"ALTER TABLE <table> ADD {ColumnDefinition(column)}";
+        var column = child as Column ?? throw new Exception("Unexpected object type");
+        yield return $"ALTER TABLE {parent} ADD {ColumnDefinition(column)}";
     }
 
-    private IEnumerable<string> DropTable(DbObject @object)
+    private IEnumerable<string> DropTable(DbObject? parent, DbObject child)
     {
-        yield return $"DROP TABLE {QualifiedName(@object)}";
+        yield return $"DROP TABLE {QualifiedName(child)}";
     }
 
-    private IEnumerable<string> AlterTable(DbObject @object)
+    private IEnumerable<string> AlterTable(DbObject? parent, DbObject @object)
     {
         throw new NotImplementedException();
     }
 
-    private IEnumerable<string> CreateTable(DbObject @object)
+    private IEnumerable<string> CreateTable(DbObject? parent, DbObject child)
     {
-        var table = @object as Table ?? throw new Exception("Unexpected object type");
+        var table = child as Table ?? throw new Exception("Unexpected object type");
 
         //if (!SchemaExists) create schema
 
         yield return 
-            $@"CREATE TABLE {QualifiedName(@object)} (
+            $@"CREATE TABLE {QualifiedName(child)} (
                 {string.Join("\r\n,", table.Columns.Select(Syntax[DbObjectType.Column].Definition!))}
             )";
     }

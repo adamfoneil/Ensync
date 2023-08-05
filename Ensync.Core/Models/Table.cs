@@ -8,6 +8,7 @@ public class Table : DbObject
 
     public HashSet<Column> Columns { get; init; } = new();
     public HashSet<Index> Indexes { get; init; } = new();
+    public HashSet<ForeignKey> ForeignKeys { get; init; } = new();
 
     public long RowCount { get; init; }
 }

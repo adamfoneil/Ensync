@@ -12,8 +12,7 @@ public enum DbObjectType
 
 public abstract class DbObject
 {
-    public int Id { get; init; }
-    public int ParentId { get; init; }    
+    public int Id { get; init; }    
     public abstract DbObjectType Type { get; }
     public string Name { get; init; } = default!;
 
@@ -21,11 +20,11 @@ public abstract class DbObject
     {
         if (obj is DbObject dbObj)
         {
-            return (string.Compare(dbObj.Name, Name, true) == 0);
+            return Type == dbObj.Type && Name.Equals(dbObj.Name, StringComparison.OrdinalIgnoreCase);
         }
 
         return false;
     }
 
-    public override int GetHashCode() => Name.ToLower().GetHashCode();    
+    public override int GetHashCode() => $"{Type}.{Name.ToLower()}".GetHashCode();
 }

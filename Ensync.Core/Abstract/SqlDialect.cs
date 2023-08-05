@@ -7,15 +7,15 @@ public abstract class SqlDialect
     public class SqlStatements
     {
         public Func<DbObject, string>? Definition { get; init; }
-        public required Func<DbObject, IEnumerable<string>> Create { get; init; }
-        public required Func<DbObject, IEnumerable<string>> Alter { get; init; }
-        public required Func<DbObject, IEnumerable<string>> Drop { get; init; }
+        public required Func<DbObject?, DbObject, IEnumerable<string>> Create { get; init; }
+        public required Func<DbObject?, DbObject, IEnumerable<string>> Alter { get; init; }
+        public required Func<DbObject?, DbObject, IEnumerable<string>> Drop { get; init; }
 
-        public IEnumerable<string> GetScript(ScriptActionType actionType, DbObject dbObject) => actionType switch
+        public IEnumerable<string> GetScript(ScriptActionType actionType, DbObject? parent, DbObject child) => actionType switch
         {
-            ScriptActionType.Create => Create.Invoke(dbObject),
-            ScriptActionType.Alter => Alter.Invoke(dbObject), // drop dependencies, alter object, re-create dependencies
-            ScriptActionType.Drop => Drop.Invoke(dbObject), // drop dependencies, drop object
+            ScriptActionType.Create => Create.Invoke(parent, child),
+            ScriptActionType.Alter => Alter.Invoke(parent, child), // drop dependencies, alter object, re-create dependencies
+            ScriptActionType.Drop => Drop.Invoke(parent, child), // drop dependencies, drop object
             _ => throw new NotSupportedException()
         };
     }
