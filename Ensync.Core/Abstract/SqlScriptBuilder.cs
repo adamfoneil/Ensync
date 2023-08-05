@@ -30,7 +30,7 @@ public abstract class SqlScriptBuilder
     };
 
     private IEnumerable<(StatementPlacement, string)> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject? parent, DbObject child) =>
-        child.GetDependencies(schema).SelectMany(obj => syntax[obj.Type].Drop(parent, obj));
+        child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Drop(obj.Parent, obj.Child));
 
     public class SqlStatements
     {       

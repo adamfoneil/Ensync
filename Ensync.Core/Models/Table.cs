@@ -13,7 +13,9 @@ public class Table : DbObject
 
     public long RowCount { get; init; }
 
-    public override IEnumerable<DbObject> GetDependencies(Schema schema) => schema
-        .Tables
-        .SelectMany(t => t.ForeignKeys.Where(fk => fk.ReferencedTable.Equals(this)));
+    public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema) =>
+        schema.Tables
+           .SelectMany(
+                t => t.ForeignKeys.Where(fk => fk.ReferencedTable.Equals(this)),
+                (t, fk) => ((DbObject?)t, (DbObject)fk));
 }

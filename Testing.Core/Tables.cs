@@ -46,6 +46,10 @@ public class Tables
 
         var scriptBuilder = new SqlServerScriptBuilder();
         var statements = scriptBuilder.GetScript(ScriptActionType.Drop, schema, null, parent).ToArray();
-            
+        Assert.IsTrue(statements.Select(st => st.Item2).SequenceEqual(new[]
+        {
+            "ALTER TABLE [dbo].[Child] DROP CONSTRAINT [FK_Child_Parent]",
+            "DROP TABLE [dbo].[Parent]"
+        }));  
     }
 }
