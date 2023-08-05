@@ -37,9 +37,9 @@ public class Schema
 
     private void CreateTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
-        results.AddRange(sourceTables.Except(targetSchema.Tables).Select(t => new ScriptAction(ScriptActionType.Create, t)
+        results.AddRange(sourceTables.Except(targetSchema.Tables).Select(tbl => new ScriptAction(ScriptActionType.Create, tbl)
         {
-            Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, null, t)
+            Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, null, tbl)
         }));
     }
 

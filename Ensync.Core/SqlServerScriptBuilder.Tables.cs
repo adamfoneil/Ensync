@@ -47,7 +47,7 @@ public partial class SqlServerScriptBuilder
         }
 
         yield return
-            (StatementPlacement.Immediate, $@"CREATE TABLE {FormatName(child)} (
+            (StatementPlacement.Immediate, $@"CREATE TABLE {FormatName(table)} (
                 {string.Join("\r\n,", table.Columns.Select(Syntax[DbObjectType.Column].Definition!))}
             )");
 
@@ -59,20 +59,6 @@ public partial class SqlServerScriptBuilder
         foreach (var check in table.CheckConstraints)
         {
             // alter table add constraint
-        }
-
-        foreach (var fk in table.ForeignKeys)
-        {
-            var tableName = ParseTableName(fk.ReferencedTable.Name);
-            if (_tables.Contains((tableName.Schema, tableName.Name)))
-            {
-                string referencingColumns = string.Join(", ", fk.Columns.Select(col => FormatName(col.ReferencingName)));
-                string referencedColumns = string.Join(", ", fk.Columns.Select(col => FormatName(col.ReferencedName)));
-                var result = $"ALTER TABLE {FormatName(child)} ADD CONSTRAINT {FormatName(fk)} FOREIGN KEY ({referencingColumns}) REFERENCES {FormatName(fk.ReferencedTable)} ({referencedColumns})";
-                if (fk.CascadeDelete) result += " ON DELETE CASCADE";
-                if (fk.CascadeUpdate) result += " ON UPDATE CASCADE";
-                yield return (StatementPlacement.Deferred, result);
-            }
         }
     }
 
