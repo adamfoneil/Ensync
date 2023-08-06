@@ -12,7 +12,7 @@ public partial class SqlServerScriptBuilder
         var index = @object as Index ?? throw new Exception("Unexpected object type");
         var columnList = string.Join(", ", index.Columns.OrderBy(col => col.Order).Select(col => $"{FormatName(col.Name)} {((col.Direction == SortDirection.Ascending) ? "ASC" : "DESC")}"));
         return $"({columnList})";
-    }
+    }    
 
     private IEnumerable<(StatementPlacement, string)> CreateIndex(DbObject? parent, DbObject child)
     {

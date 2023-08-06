@@ -1,5 +1,6 @@
 ﻿using Ensync.Core;
 using Ensync.Core.Models;
+using Ensync.SqlServer;
 using SqlServer.LocalDb;
 
 namespace Testing.Core;

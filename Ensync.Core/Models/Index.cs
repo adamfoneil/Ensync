@@ -29,8 +29,9 @@ public class Index : DbObject
         public int Order { get; init; }
     }
 
-    public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema)
-    {
-        return base.GetDependencies(schema);
-    }
+    public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema) =>
+        (IndexType == IndexType.PrimaryKey || IndexType == IndexType.UniqueConstraint) ?
+            schema.ForeignKeys.Where(fkInfo => fkInfo.ForeignKey.ReferencedTable.Equals(Parent))
+                .Select(fkInfo => ((DbObject?)fkInfo.Parent, (DbObject)fkInfo.ForeignKey)) :
+            Enumerable.Empty<(DbObject?, DbObject)>();
 }

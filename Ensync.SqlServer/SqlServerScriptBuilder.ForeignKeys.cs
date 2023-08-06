@@ -1,7 +1,7 @@
 ﻿using Ensync.Core.Abstract;
 using Ensync.Core.Models;
 
-namespace Ensync.Core;
+namespace Ensync.SqlServer;
 
 public partial class SqlServerScriptBuilder
 {

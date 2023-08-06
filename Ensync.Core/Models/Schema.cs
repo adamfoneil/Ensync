@@ -6,6 +6,8 @@ public class Schema
 {
     public IEnumerable<Table> Tables { get; set; } = Enumerable.Empty<Table>();
 
+    public IEnumerable<(Table Parent, ForeignKey ForeignKey)> ForeignKeys => Tables.SelectMany(tbl => tbl.ForeignKeys, (tbl, fk) => (tbl, fk));
+
     public async Task<IEnumerable<ScriptAction>> CompareAsync(Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {       
         ArgumentNullException.ThrowIfNull(nameof(targetSchema));

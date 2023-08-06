@@ -1,4 +1,5 @@
-﻿using Ensync.Core.Models;
+﻿using Ensync.Core.Extensions;
+using Ensync.Core.Models;
 using Ensync.SqlServer;
 using SqlServer.LocalDb;
 using Index = Ensync.Core.Models.Index;
@@ -76,6 +77,21 @@ public class Scripting
         var target = new Schema();
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(Tables.DbName));
-        var script = (await source.CompareAsync(target, scriptBuilder)).ToArray(); 
+        var actions = (await source.CompareAsync(target, scriptBuilder)).ToArray();
+        var script = actions.ToSqlScript("\r\nGO\r\n");
+        Assert.IsTrue(script.Equals(
+@"CREATE TABLE [dbo].[Employee] (
+	[Id] int identity(1,1) NOT NULL,
+	[FirstName] nvarchar(50) NOT NULL,
+	[LastName] nvarchar(50) NOT NULL,
+	[EmployeeTypeId] int NOT NULL
+)
+GO
+CREATE TABLE [dbo].[EmployeeType] (
+	[Id] int identity(1,1) NOT NULL,
+	[Name] nvarchar(50) NOT NULL
+)
+GO
+ALTER TABLE [dbo].[Employee] ADD CONSTRAINT [FK_Employee_EmployeeType] FOREIGN KEY ([EmployeeTypeId]) REFERENCES [dbo].[EmployeeType] ([Id]) ON DELETE CASCADE"));
     }
 }

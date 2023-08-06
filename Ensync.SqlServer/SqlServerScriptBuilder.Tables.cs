@@ -46,9 +46,10 @@ public partial class SqlServerScriptBuilder
         }
 
         yield return
-            (StatementPlacement.Immediate, $@"CREATE TABLE {FormatName(table)} (
-                {string.Join("\r\n,", table.Columns.Select(Syntax[DbObjectType.Column].Definition!))}
-            )");
+            (StatementPlacement.Immediate, 
+$@"CREATE TABLE {FormatName(table)} (
+{string.Join(",\r\n", table.Columns.Select(col => "\t" + Syntax[DbObjectType.Column].Definition!.Invoke(col)))}
+)");
 
         foreach (var index in table.Indexes)
         {

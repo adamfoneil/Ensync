@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Ensync.Core\Ensync.Core.csproj" />
+  </ItemGroup>
+
 </Project>
