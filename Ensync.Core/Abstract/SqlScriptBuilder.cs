@@ -18,6 +18,7 @@ public class DatabaseMetadata
 {
     public HashSet<string> Schemas { get; init; } = new();
     public HashSet<string> Tables { get; init; } = new();
+    public Dictionary<string, long> RowCounts { get; init; } = new();
 }
 
 public abstract class SqlScriptBuilder

@@ -2,7 +2,7 @@
 using Ensync.Core.Abstract;
 using Microsoft.Data.SqlClient;
 
-namespace Ensync.Core;
+namespace Ensync.SqlServer;
 
 
 public partial class SqlServerScriptBuilder : SqlScriptBuilder
@@ -33,7 +33,7 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
         {
             Definition = IndexDefinition,
             Create = CreateIndex,
-            Alter = AlterIndex,
+            Alter = (parent, child) => throw new NotImplementedException(),
             Drop = DropIndex
         },
         [DbObjectType.ForeignKey] = new()
@@ -60,33 +60,6 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
             (parts.Length == 2) ? (parts[0], parts[1]) :
             (parts.Length == 1) ? ("dbo", parts[0]) :
             throw new Exception("Unexpected table name format");
-    }
-
-    private async Task<bool> SchemaExistsAsync(string tableName)
-    {
-        var result = ParseTableName(tableName);
-        return await RowExistsAsync("[sys].[schema] WHERE [name]=@schema", new { result.Schema });
-    }
-
-    private async Task<long> GetRowCountAsync(string tableName)
-    {
-        throw new NotImplementedException();
-    }
-
-    private async Task<bool> TableExistsAsyc(string tableName)
-    {
-        var result = ParseTableName(tableName);
-        return await RowExistsAsync("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new 
-        {
-            result.Schema,
-            result.Name
-        });
-    }
-        
-    private async Task<bool> RowExistsAsync(string fromWhere, object parameters)
-    {
-        using var cn = new SqlConnection(_connectionString);
-        return await cn.QuerySingleOrDefaultAsync<int>($"SELECT 1 {fromWhere}", parameters) == 1;
     }
 
     protected override async Task<DatabaseMetadata> GetMetadataAsync()

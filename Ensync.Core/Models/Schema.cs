@@ -13,6 +13,9 @@ public class Schema
 
         await scriptBuilder.InspectTargetDatabaseAsync();
 
+        SetParents(this);
+        SetParents(targetSchema);
+
         List<ScriptAction> results = new();
 
         CreateTables(results, Tables, targetSchema, scriptBuilder);
@@ -33,6 +36,22 @@ public class Schema
         // DropForeignKeys
 
         return results;
+    }
+
+    /// <summary>
+    /// certain script syntax requires access to the object parent 
+    /// (e.g. indexes have an "on" clause that references the parent table explicitly).
+    /// object Parent properties aren't set necessarily in the original graph, so they're set here
+    /// </summary>    
+    private static void SetParents(Schema schema)
+    {
+        foreach (var table in schema.Tables)
+        {
+            foreach (var col in table.Columns) col.Parent ??= table;
+            foreach (var index in table.Indexes) index.Parent ??= table;
+            foreach (var fk in table.ForeignKeys) fk.Parent ??= table;
+            foreach (var chk in table.CheckConstraints) chk.Parent ??= table;
+        }
     }
 
     private void AddForeignKeys(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)

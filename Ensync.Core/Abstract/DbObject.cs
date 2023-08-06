@@ -17,6 +17,7 @@ public abstract class DbObject
     public int Id { get; init; }    
     public abstract DbObjectType Type { get; }
     public string Name { get; init; } = default!;
+    public DbObject? Parent { get; set; }
 
     public override bool Equals(object? obj)
     {
