@@ -4,12 +4,10 @@ using Microsoft.Data.SqlClient;
 
 namespace Ensync.Core;
 
+
 public partial class SqlServerScriptBuilder : SqlScriptBuilder
 {
     private readonly string _connectionString;
-
-    private HashSet<string> _schemas = new();
-    private HashSet<(string, string)> _tables = new();
 
     public SqlServerScriptBuilder(string connectionString)
     {
@@ -55,13 +53,6 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
         return string.Join(".", parts.Select(part => $"[{part.Trim()}]"));
     }
 
-    public override async Task InspectTargetDatabaseAsync()
-    {
-        using var cn = new SqlConnection(_connectionString);
-        _schemas = (await cn.QueryAsync<string>("SELECT [name] FROM [sys].[schemas]")).ToHashSet();
-        _tables = (await cn.QueryAsync<(string, string)>("SELECT SCHEMA_NAME([schema_id]), [name] FROM [sys].[tables]")).ToHashSet();
-    }
-
     private (string Schema, string Name) ParseTableName(string name)
     {
         var parts = name.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
@@ -98,5 +89,15 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
         return await cn.QuerySingleOrDefaultAsync<int>($"SELECT 1 {fromWhere}", parameters) == 1;
     }
 
-
+    protected override async Task<DatabaseMetadata> GetMetadataAsync()
+    {
+        using var cn = new SqlConnection(_connectionString);
+        var schemas = (await cn.QueryAsync<string>("SELECT [name] FROM [sys].[schemas]")).Select(val => val.ToLower()).ToHashSet();
+        var tables = (await cn.QueryAsync<string>("SELECT SCHEMA_NAME([schema_id]) + '.' + [name] FROM [sys].[tables]")).Select(val => val.ToLower()).ToHashSet();
+        return new DatabaseMetadata() 
+        { 
+            Schemas = schemas, 
+            Tables = tables 
+        };
+    }
 }

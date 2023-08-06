@@ -20,7 +20,7 @@ public class Schema
         AddColumns(results, Tables, targetSchema, scriptBuilder);
         // AddIndexes
         // AddChecks
-        // AddForeignKeys
+        AddForeignKeys(results, Tables, targetSchema, scriptBuilder);
 
         // AlterColumns
         // AlterIndexes
@@ -34,6 +34,27 @@ public class Schema
 
         return results;
     }
+
+    private void AddForeignKeys(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    {
+        results.AddRange(sourceTables.SelectMany(tbl => tbl.ForeignKeys
+            .Where(ReferencedTableCreatedOrExists)
+            .Except(TargetForeignKeys())
+            .Select(fk => new ScriptAction(ScriptActionType.Create, fk)
+        {
+            Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, tbl, fk)
+        })));
+
+        bool ReferencedTableCreatedOrExists(ForeignKey key)
+        {
+            if (results.Any(sa => sa.Object.Equals(key.ReferencedTable))) return true;
+            if (scriptBuilder.Metadata.Tables.Contains(key.ReferencedTable.Name)) return true;
+
+            return false;
+        }
+
+        IEnumerable<ForeignKey> TargetForeignKeys() => targetSchema.Tables.SelectMany(tbl => tbl.ForeignKeys);
+    }    
 
     private void CreateTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {

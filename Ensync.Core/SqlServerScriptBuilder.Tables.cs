@@ -6,9 +6,8 @@ namespace Ensync.Core;
 public partial class SqlServerScriptBuilder
 {
     private IEnumerable<(StatementPlacement, string)> AlterColumn(DbObject? parent, DbObject child)
-    {
-        var column = child as Column ?? throw new Exception("Unexpected object type");
-        yield return (StatementPlacement.Immediate, $"ALTER TABLE {FormatName(parent!)} ALTER COLUMN {ColumnDefinition(column)}");
+    {        
+        yield return (StatementPlacement.Immediate, $"ALTER TABLE {FormatName(parent!)} ALTER COLUMN {ColumnDefinition(child)}");
     }
 
     private string ColumnDefinition(DbObject @object)
@@ -41,7 +40,7 @@ public partial class SqlServerScriptBuilder
         var table = child as Table ?? throw new Exception("Unexpected object type");
 
         var schema = SchemaName(child.Name);
-        if (!_schemas.Contains(schema))
+        if (!Metadata.Schemas.Contains(schema))
         {
             yield return (StatementPlacement.Immediate, $"CREATE SCHEMA {FormatName(schema)}");
         }
