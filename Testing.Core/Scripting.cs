@@ -1,5 +1,5 @@
-﻿using Ensync.Core;
-using Ensync.Core.Models;
+﻿using Ensync.Core.Models;
+using Ensync.SqlServer;
 using SqlServer.LocalDb;
 using Index = Ensync.Core.Models.Index;
 

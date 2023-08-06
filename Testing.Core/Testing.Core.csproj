@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ensync.Core\Ensync.Core.csproj" />
+    <ProjectReference Include="..\Ensync.SqlServer\Ensync.SqlServer.csproj" />
   </ItemGroup>
 
 </Project>
