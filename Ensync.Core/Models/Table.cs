@@ -12,6 +12,7 @@ public class Table : DbObject
     public IEnumerable<CheckConstraint> CheckConstraints { get; init; } = Enumerable.Empty<CheckConstraint>();    
 
     public long RowCount { get; init; }
+    public bool HasData => RowCount > 0;
 
     public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema) =>
         schema.Tables

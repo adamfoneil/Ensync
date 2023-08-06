@@ -26,5 +26,11 @@ public class Index : DbObject
     {
         public required string Name { get; init; }
         public SortDirection Direction { get; init; }
+        public int Order { get; init; }
+    }
+
+    public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema)
+    {
+        return base.GetDependencies(schema);
     }
 }
