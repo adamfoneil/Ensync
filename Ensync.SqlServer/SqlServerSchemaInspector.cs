@@ -18,28 +18,110 @@ public class SqlServerSchemaInspector : SchemaInspector
 	}
 
 	protected override async Task<IEnumerable<DbObject>> GetDbObjectsAsync()
-	{
-		using var cn = new SqlConnection(_connectionString);
+    {
+        using var cn = new SqlConnection(_connectionString);
 
-		var tables = await cn.QueryAsync<Table>(
-			@"WITH [clusteredIndexes] AS (
-					SELECT [name], [object_id] FROM [sys].[indexes] WHERE [type_desc]='CLUSTERED'
-				), [identityColumns] AS (
-					SELECT [object_id], [name] FROM [sys].[columns] WHERE [is_identity]=1
-				) SELECT
-					SCHEMA_NAME([t].[schema_id]) + '.' + [t].[name] AS [Name],					
-					[t].[object_id] AS [ObjectId],
-					[c].[name] AS [ClusteredIndex],
-					[i].[name] AS [IdentityColumn]					
-				FROM
-					[sys].[tables] [t]
-					LEFT JOIN [clusteredIndexes] [c] ON [t].[object_id]=[c].[object_id]
-					LEFT JOIN [identityColumns] [i] ON [t].[object_id]=[i].[object_id]
-				WHERE					
-					[t].[name] NOT IN ('__MigrationHistory', '__EFMigrationsHistory')");
+        IEnumerable<Table> tables = await GetTablesAsync(cn);
+        IEnumerable<Column> columns = await GetColumnAsync(cn);
+        IEnumerable<CheckConstraint> checks = await GetCheckConstraintsAsync(cn);
+        IEnumerable<Index> indexes = await GetIndexesAsync(cn);
+        IEnumerable<IndexColumnResult> indexCols = await GetIndexColumnsAsync(cn);
+		IEnumerable<ForeignKey> foreignKeys = await GetForeignKeysAsync(cn, tables);
 
-		var columns = await cn.QueryAsync<Column>(
-			@"WITH [identityColumns] AS (
+        var columnLookup = columns.ToLookup(row => row.ObjectId);
+        var checkLookup = checks.ToLookup(row => row.ObjectId);
+        var indexLookup = indexes.ToLookup(row => row.ObjectId);
+        var indexColLookup = indexCols.ToLookup(row => new IndexKey() { object_id = row.object_id, index_id = row.index_id });
+		var fkLookup = foreignKeys.ToLookup(row => row.ObjectId);
+
+        foreach (var x in indexes)
+        {
+            var indexKey = new IndexKey() { object_id = x.ObjectId, index_id = x.InternalId };
+            x.Columns = indexColLookup[indexKey].Select(row => new Index.Column()
+            {
+                Name = row.name,
+                Order = row.key_ordinal,
+                Direction = (row.is_descending_key) ? SortDirection.Descending : SortDirection.Ascending
+            });
+        }
+
+        foreach (var t in tables)
+        {
+            t.Columns = columnLookup[t.ObjectId].ToArray();
+            foreach (var col in t.Columns) col.Parent = t;
+
+            t.Indexes = indexLookup[t.ObjectId].ToArray();
+            foreach (var x in t.Indexes) x.Parent = t;
+
+            t.CheckConstraints = checkLookup[t.ObjectId].ToArray();
+            foreach (var c in t.CheckConstraints) c.Parent = t;
+
+			t.ForeignKeys = fkLookup[t.ObjectId].ToArray();		
+        }
+
+        return tables;
+    }
+
+    private static async Task<IEnumerable<IndexColumnResult>> GetIndexColumnsAsync(SqlConnection cn)
+    {
+        return await cn.QueryAsync<IndexColumnResult>(
+            @"SELECT
+				[xcol].[object_id],
+				[xcol].[index_id],
+				[col].[name],
+				[xcol].[key_ordinal],
+				[xcol].[is_descending_key]
+			FROM
+				[sys].[index_columns] [xcol]
+				INNER JOIN [sys].[indexes] [x] ON [xcol].[object_id]=[x].[object_id] AND [xcol].[index_id]=[x].[index_id]
+				INNER JOIN [sys].[columns] [col] ON [xcol].[object_id]=[col].[object_id] AND [xcol].[column_id]=[col].[column_id]
+				INNER JOIN [sys].[tables] [t] ON [x].[object_id]=[t].[object_id]
+			WHERE
+				[t].[type_desc]='USER_TABLE'");
+    }
+
+    private static async Task<IEnumerable<Index>> GetIndexesAsync(SqlConnection cn)
+    {
+        return await cn.QueryAsync<Index>(
+            @"SELECT
+				[x].[object_id] AS [ObjectId],
+				[x].[name] AS [Name],
+				CONVERT(bit, CASE
+					WHEN [x].[type_desc]='CLUSTERED' THEN 1
+					ELSE 0
+				END) AS [IsClustered],
+				CASE
+					WHEN [x].[is_primary_key]=1 THEN 1
+					WHEN [x].[is_unique]=1 AND [x].[is_unique_constraint]=0 THEN 2
+					WHEN [x].[is_unique_constraint]=1 THEN 3
+					WHEN [x].[is_unique]=0 THEN 4
+				END AS [Type],
+				[x].[index_id] AS [InternalId]
+			FROM
+				[sys].[indexes] [x]
+				INNER JOIN [sys].[tables] [t] ON [x].[object_id]=[t].[object_id]
+			WHERE
+				[t].[type_desc]='USER_TABLE' AND
+				[x].[type]<>0");
+    }
+
+    private static async Task<IEnumerable<CheckConstraint>> GetCheckConstraintsAsync(SqlConnection cn)
+    {
+        return await cn.QueryAsync<CheckConstraint>(
+            @"SELECT
+				[ck].[parent_object_id] AS [ObjectId],
+				[ck].[name] AS [Name],
+				[ck].[definition] AS [Expression]
+			FROM
+				[sys].[check_constraints] [ck]
+			WHERE
+				[ck].[type]='C'");
+    }
+
+    private static async Task<IEnumerable<Column>> GetColumnAsync(SqlConnection cn)
+    {
+        return await cn.QueryAsync<Column>(
+            @"WITH [identityColumns] AS (
 				SELECT [object_id], [name] FROM [sys].[columns] WHERE [is_identity]=1
 			), [source] AS (
 				SELECT
@@ -96,82 +178,79 @@ public class SqlServerSchemaInspector : SchemaInspector
 				END AS [TypeModifier]
 			FROM
 				[source]");
+    }
 
-		var checks = await cn.QueryAsync<CheckConstraint>(
-			@"SELECT
-				[ck].[parent_object_id] AS [ObjectId],
-				[ck].[name] AS [Name],
-				[ck].[definition] AS [Expression]
+    private static async Task<IEnumerable<Table>> GetTablesAsync(SqlConnection cn)
+    {
+        return await cn.QueryAsync<Table>(
+            @"WITH [clusteredIndexes] AS (
+					SELECT [name], [object_id] FROM [sys].[indexes] WHERE [type_desc]='CLUSTERED'
+				), [identityColumns] AS (
+					SELECT [object_id], [name] FROM [sys].[columns] WHERE [is_identity]=1
+				) SELECT
+					SCHEMA_NAME([t].[schema_id]) + '.' + [t].[name] AS [Name],					
+					[t].[object_id] AS [ObjectId],
+					[c].[name] AS [ClusteredIndex],
+					[i].[name] AS [IdentityColumn]					
+				FROM
+					[sys].[tables] [t]
+					LEFT JOIN [clusteredIndexes] [c] ON [t].[object_id]=[c].[object_id]
+					LEFT JOIN [identityColumns] [i] ON [t].[object_id]=[i].[object_id]
+				WHERE					
+					[t].[name] NOT IN ('__MigrationHistory', '__EFMigrationsHistory')");
+    }
+
+	private static async Task<IEnumerable<ForeignKey>> GetForeignKeysAsync(SqlConnection cn, IEnumerable<Table> tables)
+	{
+        var tableDictionary = tables.ToDictionary(item => item.Name);
+
+        var foreignKeys = await cn.QueryAsync<ForeignKeysResult>(
+            @"SELECT
+				[fk].[object_id] AS [ObjectId],
+				[child_t].[object_id] AS [ReferencingObjectId],
+				[fk].[name] AS [ConstraintName],
+				SCHEMA_NAME([ref_t].[schema_id]) AS [ReferencedSchema],
+				[ref_t].[name] AS [ReferencedTable],
+				SCHEMA_NAME([child_t].[schema_id]) AS [ReferencingSchema],
+				[child_t].[name] AS [ReferencingTable],				
+				CONVERT(bit, [fk].[delete_referential_action]) AS [CascadeDelete],
+				CONVERT(bit, [fk].[update_referential_action]) AS [CascadeUpdate]
 			FROM
-				[sys].[check_constraints] [ck]
-			WHERE
-				[ck].[type]='C'");
+				[sys].[foreign_keys] [fk]
+				INNER JOIN [sys].[tables] [ref_t] ON [fk].[referenced_object_id]=[ref_t].[object_id]
+				INNER JOIN [sys].[tables] [child_t] ON [fk].[parent_object_id]=[child_t].[object_id]");
 
-		var indexes = await cn.QueryAsync<Index>(
-			@"SELECT
-				[x].[object_id] AS [ObjectId],
-				[x].[name] AS [Name],
-				CONVERT(bit, CASE
-					WHEN [x].[type_desc]='CLUSTERED' THEN 1
-					ELSE 0
-				END) AS [IsClustered],
-				CASE
-					WHEN [x].[is_primary_key]=1 THEN 1
-					WHEN [x].[is_unique]=1 AND [x].[is_unique_constraint]=0 THEN 2
-					WHEN [x].[is_unique_constraint]=1 THEN 3
-					WHEN [x].[is_unique]=0 THEN 4
-				END AS [Type],
-				[x].[index_id] AS [InternalId]
+        var columns = await cn.QueryAsync<ForeignKeyColumnsResult>(
+            @"SELECT
+				[fkcol].[constraint_object_id] AS [ObjectId],
+				[child_col].[name] AS [ReferencingName],
+				[ref_col].[name] AS [ReferencedName]
 			FROM
-				[sys].[indexes] [x]
-				INNER JOIN [sys].[tables] [t] ON [x].[object_id]=[t].[object_id]
-			WHERE
-				[t].[type_desc]='USER_TABLE' AND
-				[x].[type]<>0");
+				[sys].[foreign_key_columns] [fkcol]
+				INNER JOIN [sys].[tables] [child_t] ON [fkcol].[parent_object_id]=[child_t].[object_id]
+				INNER JOIN [sys].[columns] [child_col] ON
+					[child_t].[object_id]=[child_col].[object_id] AND
+					[fkcol].[parent_column_id]=[child_col].[column_id]
+				INNER JOIN [sys].[tables] [ref_t] ON [fkcol].[referenced_object_id]=[ref_t].[object_id]
+				INNER JOIN [sys].[columns] [ref_col] ON
+					[ref_t].[object_id]=[ref_col].[object_id] AND
+					[fkcol].[referenced_column_id]=[ref_col].[column_id]");
 
-		var indexCols = await cn.QueryAsync<IndexColumnResult>(
-			@"SELECT
-				[xcol].[object_id],
-				[xcol].[index_id],
-				[col].[name],
-				[xcol].[key_ordinal],
-				[xcol].[is_descending_key]
-			FROM
-				[sys].[index_columns] [xcol]
-				INNER JOIN [sys].[indexes] [x] ON [xcol].[object_id]=[x].[object_id] AND [xcol].[index_id]=[x].[index_id]
-				INNER JOIN [sys].[columns] [col] ON [xcol].[object_id]=[col].[object_id] AND [xcol].[column_id]=[col].[column_id]
-				INNER JOIN [sys].[tables] [t] ON [x].[object_id]=[t].[object_id]
-			WHERE
-				[t].[type_desc]='USER_TABLE'");
+        var colLookup = columns.ToLookup(row => row.ObjectId);
 
-		var columnLookup = columns.ToLookup(row => row.ObjectId);
-		var checkLookup = checks.ToLookup(row => row.ObjectId);
-		var indexLookup = indexes.ToLookup(row => row.ObjectId);
-		var indexColLookup = indexCols.ToLookup(row => new IndexKey() { object_id = row.object_id, index_id = row.index_id });
-
-		foreach (var x in indexes)
-		{
-			var indexKey = new IndexKey() { object_id = x.ObjectId, index_id = x.InternalId };
-			x.Columns = indexColLookup[indexKey].Select(row => new Index.Column()
-			{
-				Name = row.name,
-				Order = row.key_ordinal,
-				Direction = (row.is_descending_key) ? SortDirection.Descending : SortDirection.Ascending
-			});
-		}
-
-		foreach (var t in tables)
-		{
-			t.Columns = columnLookup[t.ObjectId].ToArray();
-			foreach (var col in t.Columns) col.Parent = t;
-
-			t.Indexes = indexLookup[t.ObjectId].ToArray();
-			foreach (var x in t.Indexes) x.Parent = t;
-
-			t.CheckConstraints = checkLookup[t.ObjectId].ToArray();
-			foreach (var c in t.CheckConstraints) c.Parent = t;
-		}
-
-		return tables;
-	}
+        return foreignKeys.Select(fk => new ForeignKey()
+        {
+            Name = fk.ConstraintName,
+			ObjectId = fk.ReferencingObjectId,
+            ReferencedTable = tableDictionary[$"{fk.ReferencedSchema}.{fk.ReferencedTable}"],
+            Parent = tableDictionary[$"{fk.ReferencingSchema}.{fk.ReferencingTable}"],
+            CascadeDelete = fk.CascadeDelete,
+            CascadeUpdate = fk.CascadeUpdate,
+            Columns = colLookup[fk.ObjectId].Select(fkcol => new ForeignKey.Column()
+            {
+                ReferencedName = fkcol.ReferencedName,
+                ReferencingName = fkcol.ReferencingName
+            })
+        });
+    }
 }

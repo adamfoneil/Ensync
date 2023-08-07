@@ -1,4 +1,5 @@
 ﻿using Ensync.Core.Abstract;
+using Ensync.Core.Extensions;
 
 namespace Ensync.Core.Models;
 
@@ -40,6 +41,18 @@ public class Schema
         return results;
     }
 
+    public async Task<IEnumerable<ScriptAction>> CreateAsync(SqlScriptBuilder scriptBuilder)
+    {
+        var target = new Schema();
+        return await CompareAsync(target, scriptBuilder);        
+    }
+
+    public async Task<string> CreateScriptAsync(SqlScriptBuilder scriptBuilder, string separator)
+    {
+        var script = await CreateAsync(scriptBuilder);
+        return script.ToSqlScript(separator);
+    }
+
     /// <summary>
     /// certain script syntax requires access to the object parent 
     /// (e.g. indexes have an "on" clause that references the parent table explicitly).
@@ -58,6 +71,10 @@ public class Schema
 
     private void AddForeignKeys(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
+        var fks = sourceTables.SelectMany(t => t.ForeignKeys).ToArray();
+        var fks1 = fks.Where(ReferencedTableCreatedOrExists);
+        var fks2 = fks1.Except(TargetForeignKeys());
+
         results.AddRange(sourceTables.SelectMany(tbl => tbl.ForeignKeys
             .Where(ReferencedTableCreatedOrExists)
             .Except(TargetForeignKeys())

@@ -13,7 +13,11 @@ public partial class SqlServerScriptBuilder
     private string ColumnDefinition(DbObject @object)
     {
         var column = @object as Column ?? throw new Exception("Unexpected object type");
-        return $"[{column.Name}] {column.DataType} {(column.IsNullable ? "NULL" : "NOT NULL")}";
+        var table = @object.Parent as Table ?? throw new Exception("Unexpected parent object type");
+        
+        var dataType = column.DataType;
+        if (column.Name.Equals(table.IdentityColumn)) dataType += " identity(1,1)";
+        return $"[{column.Name}] {dataType} {(column.IsNullable ? "NULL" : "NOT NULL")}";
     }
 
     private IEnumerable<(StatementPlacement, string)> DropColumn(DbObject? parent, DbObject @object)
