@@ -21,8 +21,7 @@ public class Schema
 
         List<ScriptAction> results = new();
 
-        CreateTables(results, Tables, targetSchema, scriptBuilder);
-
+        AddTables(results, Tables, targetSchema, scriptBuilder);
         AddColumns(results, Tables, targetSchema, scriptBuilder);
         // AddIndexes
         // AddChecks
@@ -34,7 +33,7 @@ public class Schema
         // AlterForeignKeys
 
         // DropTables
-        // DropColumns
+        DropColumns(results, Tables, targetSchema, scriptBuilder);
         // DropIndexes
         // DropForeignKeys
 
@@ -94,7 +93,7 @@ public class Schema
         IEnumerable<ForeignKey> TargetForeignKeys() => targetSchema.Tables.SelectMany(tbl => tbl.ForeignKeys);
     }    
 
-    private void CreateTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    private void AddTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
         results.AddRange(sourceTables.Except(targetSchema.Tables).Select(tbl => new ScriptAction(ScriptActionType.Create, tbl)
         {
@@ -104,15 +103,24 @@ public class Schema
 
     private void AddColumns(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
-        var commonTables = sourceTables.Join(targetSchema.Tables, source => source, target => target, (source, target) => new
-        {
-            Source = source,
-            Target = target
-        });
+        var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
 
         results.AddRange(commonTables.SelectMany(tablePair => tablePair.Source.Columns.Except(tablePair.Target.Columns).Select(col => new ScriptAction(ScriptActionType.Create, col)
         {
             Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, tablePair.Source, col)
         })));
     }
+        
+    private void DropColumns(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    {
+        var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
+
+        results.AddRange(commonTables.SelectMany(tablePair => tablePair.Target.Columns.Except(tablePair.Source.Columns).Select(col => new ScriptAction(ScriptActionType.Drop, col)
+        {
+            Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, tablePair.Source, col)
+        })));
+    }
+
+    private static IEnumerable<(Table Source, Table Target)> GetCommonTables(IEnumerable<Table> sourceTables, IEnumerable<Table> targetTables) =>
+        sourceTables.Join(targetTables, source => source, target => target, (source, target) => (source, target));
 }

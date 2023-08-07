@@ -23,6 +23,7 @@ public abstract class DbObject
     {
         if (obj is DbObject dbObj)
         {
+            if (ObjectId != default && ObjectId == dbObj.ObjectId) return true;
             return Type == dbObj.Type && Name.Equals(dbObj.Name, StringComparison.OrdinalIgnoreCase);
         }
 
