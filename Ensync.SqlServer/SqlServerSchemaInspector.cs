@@ -95,7 +95,7 @@ public class SqlServerSchemaInspector : SchemaInspector
 					WHEN [x].[is_unique]=1 AND [x].[is_unique_constraint]=0 THEN 2
 					WHEN [x].[is_unique_constraint]=1 THEN 3
 					WHEN [x].[is_unique]=0 THEN 4
-				END AS [Type],
+				END AS [IndexType],
 				[x].[index_id] AS [InternalId]
 			FROM
 				[sys].[indexes] [x]

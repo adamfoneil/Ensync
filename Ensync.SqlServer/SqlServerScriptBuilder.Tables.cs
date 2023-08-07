@@ -57,7 +57,7 @@ $@"CREATE TABLE {FormatName(table)} (
 
         foreach (var index in table.Indexes)
         {
-            // create index or alter table add constraint
+            foreach (var statement in CreateIndex(table, index)) yield return statement;
         }
 
         foreach (var check in table.CheckConstraints)

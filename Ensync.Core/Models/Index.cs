@@ -21,7 +21,8 @@ public class Index : DbObject
     public override DbObjectType Type => DbObjectType.Index;
     public IndexType IndexType { get; init; }
     public required IEnumerable<Column> Columns { get; set; }
-    public int InternalId { get; set; }
+    public int InternalId { get; init; }
+    public bool IsClustered { get; init; }
 
     public class Column
     {
