@@ -19,5 +19,5 @@ public class ScriptAction
 
     public ScriptActionType Action { get; init; }
     public DbObject Object { get; init; }
-    public required IEnumerable<(StatementPlacement, string)> Statements { get; init; }
+    public required IEnumerable<string> Statements { get; init; }
 }

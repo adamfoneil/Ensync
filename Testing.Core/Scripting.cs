@@ -77,7 +77,7 @@ public class Scripting
         var target = new Schema();
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(Tables.DbName));
-        var actions = (await source.CompareAsync(target, scriptBuilder)).ToArray();
+        var actions = (await source.CreateAsync(scriptBuilder)).ToArray();
         var script = actions.ToSqlScript("\r\nGO\r\n");
         Assert.IsTrue(script.Equals(
 @"CREATE TABLE [dbo].[Employee] (
@@ -86,6 +86,8 @@ public class Scripting
 	[LastName] nvarchar(50) NOT NULL,
 	[EmployeeTypeId] int NOT NULL
 )
+GO
+ALTER TABLE [dbo].[Employee] ADD CONSTRAINT [PK_Employee] PRIMARY KEY ([Id] ASC)
 GO
 CREATE TABLE [dbo].[EmployeeType] (
 	[Id] int identity(1,1) NOT NULL,

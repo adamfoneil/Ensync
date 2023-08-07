@@ -16,13 +16,13 @@ public partial class SqlServerScriptBuilder
         return result;
     }
 
-    private IEnumerable<(StatementPlacement, string)> CreateForeignKey(DbObject? parent, DbObject child)
+    private IEnumerable<string> CreateForeignKey(DbObject? parent, DbObject child)
     {
-        yield return (StatementPlacement.Deferred, $"ALTER TABLE {FormatName(parent!)} ADD CONSTRAINT {ForeignKeyDefinition(child)}");
+        yield return $"ALTER TABLE {FormatName(parent!)} ADD CONSTRAINT {ForeignKeyDefinition(child)}";
     }
 
-    private IEnumerable<(StatementPlacement, string)> DropForeignKey(DbObject? parent, DbObject child)
+    private IEnumerable<string> DropForeignKey(DbObject? parent, DbObject child)
     {
-        yield return (StatementPlacement.Immediate, $"ALTER TABLE {FormatName(parent!)} DROP CONSTRAINT {FormatName(child)}");
+        yield return $"ALTER TABLE {FormatName(parent!)} DROP CONSTRAINT {FormatName(child)}";
     }
 }

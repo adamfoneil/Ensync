@@ -2,18 +2,6 @@
 
 namespace Ensync.Core.Abstract;
 
-public enum StatementPlacement
-{
-    /// <summary>
-    /// most statements are run immediately
-    /// </summary>
-    Immediate,
-    /// <summary>
-    /// but foreign keys need to be at the end of the script
-    /// </summary>
-    Deferred
-}
-
 public class DatabaseMetadata
 {
     public HashSet<string> Schemas { get; init; } = new();
@@ -36,7 +24,7 @@ public abstract class SqlScriptBuilder
         Metadata = await GetMetadataAsync();
     }
 
-    public IEnumerable<(StatementPlacement, string)> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child) => actionType switch
+    public IEnumerable<string> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child) => actionType switch
     {
         ScriptActionType.Create => Syntax[child.Type].Create.Invoke(parent, child),
         ScriptActionType.Alter => Syntax[child.Type].Alter.Invoke(parent, child), // drop dependencies, alter object, re-create dependencies
@@ -44,14 +32,14 @@ public abstract class SqlScriptBuilder
         _ => throw new NotSupportedException()
     };
 
-    private IEnumerable<(StatementPlacement, string)> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject? parent, DbObject child) =>
+    private IEnumerable<string> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject? parent, DbObject child) =>
         child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Drop(obj.Parent, obj.Child));
 
     public class SqlStatements
     {       
         public Func<DbObject, string>? Definition { get; init; }
-        public required Func<DbObject?, DbObject, IEnumerable<(StatementPlacement, string)>> Create { get; init; }
-        public required Func<DbObject?, DbObject, IEnumerable<(StatementPlacement, string)>> Alter { get; init; }
-        public required Func<DbObject?, DbObject, IEnumerable<(StatementPlacement, string)>> Drop { get; init; }
+        public required Func<DbObject?, DbObject, IEnumerable<string>> Create { get; init; }
+        public required Func<DbObject?, DbObject, IEnumerable<string>> Alter { get; init; }
+        public required Func<DbObject?, DbObject, IEnumerable<string>> Drop { get; init; }
     }
 }
