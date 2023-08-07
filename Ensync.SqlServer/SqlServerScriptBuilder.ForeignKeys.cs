@@ -7,7 +7,7 @@ public partial class SqlServerScriptBuilder
 {
     private string ForeignKeyDefinition(DbObject @object)
     {
-        var fk = @object as ForeignKey ?? throw new Exception("Unexpected objec type");
+        var fk = @object as ForeignKey ?? throw new Exception("Unexpected object type");
         string referencingColumns = string.Join(", ", fk.Columns.Select(col => FormatName(col.ReferencingName)));
         string referencedColumns = string.Join(", ", fk.Columns.Select(col => FormatName(col.ReferencedName)));
         var result = $"{FormatName(fk)} FOREIGN KEY ({referencingColumns}) REFERENCES {FormatName(fk.ReferencedTable)} ({referencedColumns})";
