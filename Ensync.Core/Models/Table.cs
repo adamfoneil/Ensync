@@ -6,13 +6,10 @@ public class Table : DbObject
 {
     public override DbObjectType Type => DbObjectType.Table;
 
-    public IEnumerable<Column> Columns { get; init; } = Enumerable.Empty<Column>();
-    public IEnumerable<Index> Indexes { get; init; } = Enumerable.Empty<Index>();
-    public IEnumerable<ForeignKey> ForeignKeys { get; init; } = Enumerable.Empty<ForeignKey>();
-    public IEnumerable<CheckConstraint> CheckConstraints { get; init; } = Enumerable.Empty<CheckConstraint>();    
-
-    public long RowCount { get; init; }
-    public bool HasData => RowCount > 0;
+    public IEnumerable<Column> Columns { get; set; } = Enumerable.Empty<Column>();
+    public IEnumerable<Index> Indexes { get; set; } = Enumerable.Empty<Index>();
+    public IEnumerable<ForeignKey> ForeignKeys { get; set; } = Enumerable.Empty<ForeignKey>();
+    public IEnumerable<CheckConstraint> CheckConstraints { get; set; } = Enumerable.Empty<CheckConstraint>();    
 
     public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema) =>
         schema.Tables

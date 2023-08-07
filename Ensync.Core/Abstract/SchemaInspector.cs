@@ -7,6 +7,6 @@ public abstract class SchemaInspector
     public async Task<Dictionary<int, DbObject>> GetSchemaAsync()
     { 
         var objects = await GetDbObjectsAsync();
-        return objects.ToDictionary(obj => obj.Id, obj => obj);
+        return objects.ToDictionary(obj => obj.ObjectId, obj => obj);
     }
 }

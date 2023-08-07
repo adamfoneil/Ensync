@@ -67,10 +67,18 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
         using var cn = new SqlConnection(_connectionString);
         var schemas = (await cn.QueryAsync<string>("SELECT [name] FROM [sys].[schemas]")).Select(val => val.ToLower()).ToHashSet();
         var tables = (await cn.QueryAsync<string>("SELECT SCHEMA_NAME([schema_id]) + '.' + [name] FROM [sys].[tables]")).Select(val => val.ToLower()).ToHashSet();
+        var rowCounts = (await cn.QueryAsync<(string, long)>(
+            @"SELECT SCHEMA_NAME([t].[schema_id]) + '.' + [t].[name] AS [TableName], SUM([row_count]) AS [RowCount]
+            FROM [sys].[dm_db_partition_stats] [st] 
+            INNER JOIN [sys].[tables] [t] ON [st].[object_id] = [t].[object_id]
+            WHERE [index_id] IN (0, 1)
+            GROUP BY SCHEMA_NAME([t].[schema_id]), [t].[name]")).ToDictionary(row => row.Item1, row => row.Item2);
+
         return new DatabaseMetadata() 
         { 
             Schemas = schemas, 
-            Tables = tables 
+            Tables = tables,
+            RowCounts = rowCounts
         };
     }
 }
