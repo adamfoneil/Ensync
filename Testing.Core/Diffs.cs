@@ -4,10 +4,12 @@ using Ensync.Core.Models;
 using Ensync.SqlServer;
 using SqlServer.LocalDb;
 
+using Index = Ensync.Core.Models.Index;
+
 namespace Testing.Core;
 
 [TestClass]
-public class Tables
+public class Diffs
 {
     public const string DbName = "EnsyncDemo";
 
@@ -97,12 +99,45 @@ public class Tables
         var sourceTable = new Table() { Name = "dbo.Whatever", Columns = columns };
         var targetTable = new Table() { Name = "dbo.Whatever", Columns = columns.Concat(new[] { new Column() { Name = "Column3", DataType = "bit" } }) };
 
-        var sourceSchema = new Schema() { Tables = new[] { sourceTable } };
-        var targetSchema = new Schema() { Tables = new[] { targetTable } };
-
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
-        var script = await sourceSchema.CompareAsync(targetSchema, scriptBuilder);
+        var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
         var statements = script.ToSqlStatements();
         Assert.IsTrue(statements.SequenceEqual(new[] { "ALTER TABLE [dbo].[Whatever] DROP COLUMN [Column3]" }));
+    }
+
+    [TestMethod]
+    public async Task DropColumnWithIndex()
+    {
+        var sourceColumns = new Column[]
+        {
+            new() { Name = "Column2", DataType = "nvarchar(50)" }            
+        };
+
+        var targetColumns = sourceColumns.Concat(new Column[]
+        {
+            new() { Name = "Column1", DataType = "nvarchar(50)" }
+        });
+
+        var index = new Index()
+        {
+            Name = "IX_Whatever_Column1",
+            IndexType = IndexType.NonUnique,
+            Columns = new Index.Column[]
+            {
+                new() { Name = "Column1" }
+            }
+        };
+
+        var sourceTable = new Table() { Name = "dbo.Whatever", Columns = sourceColumns };
+        var targetTable = new Table() { Name = "dbo.Whatever", Columns = targetColumns, Indexes = new Index[] { index } };
+
+        var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+        var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
+        var statements = script.ToSqlStatements();
+        Assert.IsTrue(statements.SequenceEqual(new[]
+        {
+            "DROP INDEX [IX_Whatever_Column1] ON [dbo].[Whatever]",
+            "ALTER TABLE [dbo].[Whatever] DROP COLUMN [Column1]"
+        }));
     }
 }

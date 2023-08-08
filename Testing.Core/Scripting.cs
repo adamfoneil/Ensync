@@ -12,7 +12,7 @@ public class Scripting
     [ClassInitialize]
     public static void Startup(TestContext testContext)
     {
-        using var cn = LocalDb.GetConnection(Tables.DbName);
+        using var cn = LocalDb.GetConnection(Diffs.DbName);
     }
 
     [TestMethod]
@@ -76,7 +76,7 @@ public class Scripting
 
         var target = new Schema();
 
-        var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(Tables.DbName));
+        var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(Diffs.DbName));
         var actions = (await source.CreateAsync(scriptBuilder)).ToArray();
         var script = actions.ToSqlScript("\r\nGO\r\n");
         Assert.IsTrue(script.Equals(

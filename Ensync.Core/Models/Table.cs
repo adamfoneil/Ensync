@@ -14,6 +14,13 @@ public class Table : DbObject
     public string ClusteredIndex { get; init; } = default!;
     public string IdentityColumn { get; init; } = default!;
 
+    public async Task<IEnumerable<ScriptAction>> CompareAsync(Table targetTable, SqlScriptBuilder scriptBuilder)
+    {
+        var sourceSchema = new Schema() { Tables = new[] { this } };
+        var targetSchema = new Schema() { Tables = new[] { targetTable } };
+        return await sourceSchema.CompareAsync(targetSchema, scriptBuilder);
+    }
+
     public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema) =>
         schema.Tables
            .SelectMany(

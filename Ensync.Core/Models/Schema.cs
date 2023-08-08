@@ -7,6 +7,8 @@ public class Schema
 {
     public IEnumerable<Table> Tables { get; set; } = Enumerable.Empty<Table>();
 
+    public Dictionary<string, Table> TableDictionary => Tables.ToDictionary(tbl => tbl.Name);
+
     public IEnumerable<(Table Parent, ForeignKey ForeignKey)> ForeignKeys => Tables.SelectMany(tbl => tbl.ForeignKeys, (tbl, fk) => (tbl, fk));
 
     public async Task<IEnumerable<ScriptAction>> CompareAsync(Schema targetSchema, SqlScriptBuilder scriptBuilder)
