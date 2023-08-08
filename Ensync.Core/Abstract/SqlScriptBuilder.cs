@@ -26,14 +26,26 @@ public abstract class SqlScriptBuilder
 
     public IEnumerable<string> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child) => actionType switch
     {
-        ScriptActionType.Create => Syntax[child.Type].Create.Invoke(parent, child),
-        ScriptActionType.Alter => Syntax[child.Type].Alter.Invoke(parent, child), // drop dependencies, alter object, re-create dependencies
-        ScriptActionType.Drop => DropDependencies(Syntax, schema, parent, child).Concat(Syntax[child.Type].Drop.Invoke(parent, child)), // drop dependencies, drop object
+        ScriptActionType.Create => 
+            Syntax[child.Type].Create.Invoke(parent, child),
+
+        ScriptActionType.Alter => 
+            DropDependencies(Syntax, schema, parent, child)
+            .Concat(Syntax[child.Type].Alter.Invoke(parent, child))
+            .Concat(CreateDependencies(Syntax, schema, parent, child)),
+
+        ScriptActionType.Drop => 
+            DropDependencies(Syntax, schema, parent, child)
+            .Concat(Syntax[child.Type].Drop.Invoke(parent, child)),
+
         _ => throw new NotSupportedException()
     };
 
     private IEnumerable<string> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject? parent, DbObject child) =>
         child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Drop(obj.Parent, obj.Child));
+
+    private IEnumerable<string> CreateDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject? parent, DbObject child) =>
+        child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Create(obj.Parent, obj.Child));
 
     public class SqlStatements
     {       

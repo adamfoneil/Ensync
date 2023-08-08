@@ -20,7 +20,7 @@ public class Diffs
     }
 
     [TestMethod]
-    public void DropTable()
+    public void DropReferencedTable()
     {
         var parent = new Table()
         {
@@ -139,5 +139,32 @@ public class Diffs
             "DROP INDEX [IX_Whatever_Column1] ON [dbo].[Whatever]",
             "ALTER TABLE [dbo].[Whatever] DROP COLUMN [Column1]"
         }));
+    }
+
+    [TestMethod]
+    public async Task AlterColumn()
+    {
+        Assert.Fail();
+    }
+
+    [TestMethod]
+    public async Task AlterColumnWithIndex()
+    {
+        Assert.Fail();
+        // drop dependencies
+        // alter column(s)
+        // rebuild dependencies
+    }
+
+    [TestMethod]
+    public async Task AlterReferencedPKColumn()
+    {
+        Assert.Fail();
+    }
+
+    [TestMethod]
+    public async Task AddIndex()
+    {
+        Assert.Fail();
     }
 }

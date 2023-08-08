@@ -19,6 +19,8 @@ public abstract class DbObject
     public string Name { get; init; } = default!;
     public DbObject? Parent { get; set; }
 
+    public virtual (bool Result, string? Message) IsAltered(DbObject compareWith) => (false, null);
+
     public override bool Equals(object? obj)
     {
         if (obj is DbObject dbObj)
