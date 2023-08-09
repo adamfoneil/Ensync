@@ -14,6 +14,7 @@ public class Diffs
     public const string DbName = "EnsyncDemo";
 
     [ClassInitialize]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Required by Test Framework")]
     public static void Startup(TestContext testContext)
     {
         using var cn = LocalDb.GetConnection(DbName);
@@ -163,7 +164,35 @@ public class Diffs
     [TestMethod]
     public async Task AlterColumn()
     {
-        Assert.Fail();
+        var sourceTable = new Table()
+        {
+            Name = "dbo.Whatever",
+            Columns = new Column[]
+            {
+                new() { Name = "Column1", DataType = "nvarchar(50)", IsNullable = false },
+                new() { Name = "Column2", DataType = "datetime", IsNullable = true },
+                new() { Name = "Column3", DataType = "bit", IsNullable = false }
+            }
+        };
+
+        var targetTable = new Table()
+        {
+            Name = "dbo.Whatever",
+            Columns = new Column[]
+            {
+                new() { Name = "Column1", DataType = "nvarchar(40)", IsNullable = false },
+                new() { Name = "Column2", DataType = "datetime", IsNullable = false },
+                new() { Name = "Column3", DataType = "bit", IsNullable = false }
+            }
+        };
+
+        var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+        var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
+        Assert.IsTrue(script.ToSqlStatements(scriptBuilder).SequenceEqual(new[]
+        {
+            "ALTER TABLE [dbo].[Whatever] ALTER COLUMN [Column1] nvarchar(50) NOT NULL",
+            "ALTER TABLE [dbo].[Whatever] ALTER COLUMN [Column2] datetime NULL"
+        }));
     }
 
     [TestMethod]

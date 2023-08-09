@@ -59,7 +59,7 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
         return string.Join(".", parts.Select(part => $"[{part.Trim()}]"));
     }
 
-    private (string Schema, string Name) ParseTableName(string name)
+    private static (string Schema, string Name) ParseTableName(string name)
     {
         var parts = name.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
         return

@@ -14,6 +14,18 @@ public class Column : DbObject
     public bool IsDefaultRequired { get; init; }
     public int InternalId { get; init; }
 
+    public override (bool Result, string? Message) IsAltered(DbObject compareWith)
+    {
+        if (compareWith is Column column)
+        {
+            if (!DataType.Equals(column.DataType)) return (true, $"Data type changed from {column.DataType} to {DataType}");
+            if (IsNullable != column.IsNullable) return (true, $"Nullability changed from {column.IsNullable} to {column.IsNullable}");
+            if (DefaultValue != column.DefaultValue) return (true, $"Default value changed from {column.DefaultValue} to {DefaultValue}");
+        }
+
+        return (false, default);
+    }
+
     public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema)
     {
         List<(DbObject?, DbObject)> results = new();

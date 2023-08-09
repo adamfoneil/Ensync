@@ -63,7 +63,7 @@ public partial class SqlServerScriptBuilder
         }
     }
 
-    private string SchemaName(string name)
+    private static string SchemaName(string name)
     {
         var parts = name.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
 

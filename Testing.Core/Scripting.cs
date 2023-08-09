@@ -11,6 +11,7 @@ namespace Testing.Core;
 public class Scripting
 {
     [ClassInitialize]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Required by Test Framework")]
     public static void Startup(TestContext testContext)
     {
         using var cn = LocalDb.GetConnection(Diffs.DbName);
@@ -74,8 +75,6 @@ public class Scripting
                 employeeTypeTable
             }
         };
-
-        var target = new Schema();
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(Diffs.DbName));
         var actions = (await source.CreateAsync(scriptBuilder)).ToArray();
