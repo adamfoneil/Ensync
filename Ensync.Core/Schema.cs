@@ -71,7 +71,7 @@ public class Schema
         }
     }
 
-    private void AddIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    private static void AddIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
         var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
 
@@ -82,7 +82,7 @@ public class Schema
             }));
     }
 
-    private void DropIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    private static void DropIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
         var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
 
@@ -122,15 +122,17 @@ public class Schema
         }));
     }
 
-    private void DropTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    private static void DropTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
         results.AddRange(targetSchema.Tables.Except(sourceTables).Select(tbl => new ScriptAction(ScriptActionType.Drop, tbl)
         {
+            IsDestructive = scriptBuilder.Metadata.GetRowCount(tbl.Name) > 0,
+            Message = scriptBuilder.Metadata.GetDropWarning(tbl.Name),
             Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, null, tbl)
         }));
     }
 
-    private void AddColumns(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    private static void AddColumns(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
         var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
 
@@ -140,7 +142,7 @@ public class Schema
         })));
     }
 
-    private void DropColumns(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    private static void DropColumns(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
         var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
 

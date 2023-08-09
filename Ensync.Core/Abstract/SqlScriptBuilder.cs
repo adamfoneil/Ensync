@@ -5,6 +5,13 @@ public class DatabaseMetadata
     public HashSet<string> Schemas { get; init; } = new();
     public HashSet<string> Tables { get; init; } = new();
     public Dictionary<string, long> RowCounts { get; init; } = new();
+    public long GetRowCount(string tableName) => RowCounts.TryGetValue(tableName, out var count) ? count : 0;
+
+    internal string? GetDropWarning(string tableName)
+    {
+        var rows = GetRowCount(tableName);
+        return (rows > 0) ? $"Caution! {rows:n0} rows will be deleted" : default;
+    }
 }
 
 public abstract class SqlScriptBuilder
@@ -27,22 +34,22 @@ public abstract class SqlScriptBuilder
         ScriptActionType.Create => 
             Syntax[child.Type].Create.Invoke(parent, child),
 
-        ScriptActionType.Alter => 
+        ScriptActionType.Alter =>
             DropDependencies(Syntax, schema, parent, child)
             .Concat(Syntax[child.Type].Alter.Invoke(parent, child))
             .Concat(CreateDependencies(Syntax, schema, parent, child)),
 
-        ScriptActionType.Drop => 
+        ScriptActionType.Drop =>
             DropDependencies(Syntax, schema, parent, child)
             .Concat(Syntax[child.Type].Drop.Invoke(parent, child)),
 
         _ => throw new NotSupportedException()
     };
 
-    private IEnumerable<string> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject? parent, DbObject child) =>
+    private static IEnumerable<string> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject? parent, DbObject child) =>
         child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Drop(obj.Parent, obj.Child));
 
-    private IEnumerable<string> CreateDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject? parent, DbObject child) =>
+    private static IEnumerable<string> CreateDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject? parent, DbObject child) =>
         child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Create(obj.Parent, obj.Child));
 
     public class SqlStatements

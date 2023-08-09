@@ -20,4 +20,9 @@ public class ScriptAction
     public ScriptActionType Action { get; init; }
     public DbObject Object { get; init; }
     public required IEnumerable<string> Statements { get; init; }
+    /// <summary>
+    /// creates a warning when dropping a table with data
+    /// </summary>
+    public bool IsDestructive { get; init; }
+    public string? Message { get; init; }
 }
