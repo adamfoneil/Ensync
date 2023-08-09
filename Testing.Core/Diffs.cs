@@ -198,10 +198,56 @@ public class Diffs
     [TestMethod]
     public async Task AlterColumnWithIndex()
     {
-        Assert.Fail();
-        // drop dependencies
-        // alter column(s)
-        // rebuild dependencies
+        var sourceTable = new Table()
+        {
+            Name = "dbo.Whatever",
+            Columns = new Column[]
+            {
+                new() { Name = "Column1", DataType = "nvarchar(50)", IsNullable = false },
+            },
+            Indexes = new Index[]
+            {
+                new() 
+                { 
+                    Name = "IX_Whatever_Column1", 
+                    IndexType = IndexType.NonUnique,
+                    Columns = new Index.Column[]
+                    {
+                        new() { Name = "Column1" }
+                    }
+                }
+            }
+        };
+
+        var targetTable = new Table()
+        {
+            Name = "dbo.Whatever",
+            Columns = new Column[]
+            {
+                new() { Name = "Column1", DataType = "nvarchar(40)", IsNullable = false },
+            },
+            Indexes = new Index[]
+            {
+                new()
+                {
+                    Name = "IX_Whatever_Column1",
+                    IndexType = IndexType.NonUnique,
+                    Columns = new Index.Column[]
+                    {
+                        new() { Name = "Column1" }
+                    }
+                }
+            }
+        };
+
+        var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+        var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
+        Assert.IsTrue(script.ToSqlStatements(scriptBuilder).SequenceEqual(new[]
+        {
+            "DROP INDEX [IX_Whatever_Column1] ON [dbo].[Whatever]",
+            "ALTER TABLE [dbo].[Whatever] ALTER COLUMN [Column1] nvarchar(50) NOT NULL",
+            "CREATE INDEX [IX_Whatever_Column1] ON [dbo].[Whatever] ([Column1] ASC)",
+        }));
     }
 
     [TestMethod]
