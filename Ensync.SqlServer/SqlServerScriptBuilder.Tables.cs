@@ -35,9 +35,7 @@ public partial class SqlServerScriptBuilder
     private IEnumerable<string> DropTable(DbObject? parent, DbObject child)
     {
         yield return $"DROP TABLE {FormatName(child)}";
-    }
-
-    private IEnumerable<string> AlterTable(DbObject? parent, DbObject @object) => throw new NotImplementedException();
+    }    
 
     private IEnumerable<string> CreateTable(DbObject? parent, DbObject child)
     {

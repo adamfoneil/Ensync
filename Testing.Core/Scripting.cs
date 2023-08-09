@@ -79,7 +79,7 @@ public class Scripting
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(Diffs.DbName));
         var actions = (await source.CreateAsync(scriptBuilder)).ToArray();
-        var script = actions.ToSqlScript("\r\nGO\r\n");
+        var script = actions.ToSqlScript("\r\nGO\r\n", scriptBuilder);
         Assert.IsTrue(script.Equals(
 @"CREATE TABLE [dbo].[Employee] (
 	[Id] int identity(1,1) NOT NULL,

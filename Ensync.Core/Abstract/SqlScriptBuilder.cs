@@ -21,6 +21,13 @@ public abstract class SqlScriptBuilder
     protected abstract string FormatName(DbObject dbObject);
     protected abstract string FormatName(string name);
     protected abstract Task<DatabaseMetadata> GetMetadataAsync();
+    
+    protected abstract string BlockCommentStart { get; }
+    protected abstract string BlockCommentEnd { get; }
+    protected abstract string LineCommentStart { get; }
+
+    public string ToBlockComment(string statement) => $"{BlockCommentStart}{statement}{BlockCommentEnd}";
+    public string ToLineComment(string comment) => $"{LineCommentStart}{comment}";
 
     public DatabaseMetadata Metadata { get; private set; } = new();
 

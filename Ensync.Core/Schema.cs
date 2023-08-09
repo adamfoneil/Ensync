@@ -52,7 +52,7 @@ public class Schema
     public async Task<string> CreateScriptAsync(SqlScriptBuilder scriptBuilder, string separator)
     {
         var script = await CreateAsync(scriptBuilder);
-        return script.ToSqlScript(separator);
+        return script.ToSqlScript(separator, scriptBuilder);
     }
 
     /// <summary>
@@ -85,8 +85,9 @@ public class Schema
     private static void DropIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
         var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
+        var alreadyDroppedIndexes = results.Where(a => a.Object is DbObjects.Index && a.Action == ScriptActionType.Drop).Select(a => a.Object);
 
-        results.AddRange(commonTables.SelectMany(tblPair => tblPair.Target.Indexes.Except(tblPair.Source.Indexes))
+        results.AddRange(commonTables.SelectMany(tblPair => tblPair.Target.Indexes.Except(tblPair.Source.Indexes.Concat(alreadyDroppedIndexes)))
             .Select(ndx => new ScriptAction(ScriptActionType.Drop, ndx)
             {
                 Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, ndx.Parent, ndx)
@@ -148,6 +149,8 @@ public class Schema
 
         results.AddRange(commonTables.SelectMany(tablePair => tablePair.Target.Columns.Except(tablePair.Source.Columns).Select(col => new ScriptAction(ScriptActionType.Drop, col)
         {
+            IsDestructive = scriptBuilder.Metadata.GetRowCount(tablePair.Target.Name) > 0,
+            Message = scriptBuilder.Metadata.GetDropWarning(tablePair.Target.Name),
             Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, tablePair.Source, col)
         })));
     }

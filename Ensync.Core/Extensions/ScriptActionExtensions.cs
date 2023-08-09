@@ -4,9 +4,9 @@ namespace Ensync.Core.Extensions;
 
 public static class ScriptActionExtensions
 {
-    public static IEnumerable<string> ToSqlStatements(this IEnumerable<ScriptAction> actions) =>
-        actions.SelectMany(a => a.Statements);
+    public static IEnumerable<string> ToSqlStatements(this IEnumerable<ScriptAction> actions, SqlScriptBuilder scriptBuilder, bool allowDestruction = false) =>
+        actions.SelectMany(a => a.Statements.Select(cmd => a.IsDestructive && !allowDestruction ? scriptBuilder.ToBlockComment(cmd) : cmd));
 
-    public static string ToSqlScript(this IEnumerable<ScriptAction> actions, string separator) =>
-        string.Join(separator, ToSqlStatements(actions));    
+    public static string ToSqlScript(this IEnumerable<ScriptAction> actions, string separator, SqlScriptBuilder scriptBuilder, bool allowDestruction = false) =>
+        string.Join(separator, ToSqlStatements(actions, scriptBuilder, allowDestruction));
 }

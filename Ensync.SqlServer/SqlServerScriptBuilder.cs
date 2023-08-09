@@ -45,6 +45,12 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
         }
     };
 
+    protected override string BlockCommentStart => "/*\r\n";
+
+    protected override string BlockCommentEnd => "\r\n*/";
+
+    protected override string LineCommentStart => "-- ";
+
     protected override string FormatName(DbObject dbObject) => FormatName(dbObject.Name);
 
     protected override string FormatName(string name)

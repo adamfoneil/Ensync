@@ -83,7 +83,7 @@ public class Diffs
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
         var script = await sourceSchema.CompareAsync(targetSchema, scriptBuilder);
-        var statements = script.ToSqlStatements();
+        var statements = script.ToSqlStatements(scriptBuilder);
         Assert.IsTrue(statements.SequenceEqual(new[] { "ALTER TABLE [dbo].[Whatever] ADD [Column3] bit NOT NULL" }));
     }
 
@@ -101,7 +101,7 @@ public class Diffs
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
         var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
-        var statements = script.ToSqlStatements();
+        var statements = script.ToSqlStatements(scriptBuilder);
         Assert.IsTrue(statements.SequenceEqual(new[] { "ALTER TABLE [dbo].[Whatever] DROP COLUMN [Column3]" }));
     }
 
@@ -118,7 +118,7 @@ public class Diffs
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
         var script = await sourceSchema.CompareAsync(targetSchema, scriptBuilder);
-        Assert.IsTrue(script.ToSqlStatements().SequenceEqual(new[]
+        Assert.IsTrue(script.ToSqlStatements(scriptBuilder).SequenceEqual(new[]
         {
             "DROP TABLE [dbo].[Whatever]"
         }));
@@ -152,7 +152,7 @@ public class Diffs
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
         var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
-        var statements = script.ToSqlStatements();
+        var statements = script.ToSqlStatements(scriptBuilder);
         Assert.IsTrue(statements.SequenceEqual(new[]
         {
             "DROP INDEX [IX_Whatever_Column1] ON [dbo].[Whatever]",
@@ -204,7 +204,7 @@ public class Diffs
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
         var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
-        Assert.IsTrue(script.ToSqlStatements().SequenceEqual(new[]
+        Assert.IsTrue(script.ToSqlStatements(scriptBuilder).SequenceEqual(new[]
         {
             "CREATE INDEX [IX_Hello] ON [dbo].[Whatever] ([Column1] ASC, [Column2] ASC)"
         }));
@@ -233,7 +233,7 @@ public class Diffs
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
         var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
-        Assert.IsTrue(script.ToSqlStatements().SequenceEqual(new[]
+        Assert.IsTrue(script.ToSqlStatements(scriptBuilder).SequenceEqual(new[]
         {
             "DROP INDEX [IX_Hello] ON [dbo].[Whatever]"
         }));
