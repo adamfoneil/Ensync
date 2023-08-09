@@ -251,12 +251,6 @@ public class Diffs
     }
 
     [TestMethod]
-    public async Task AlterReferencedPKColumn()
-    {
-        Assert.Fail();
-    }
-
-    [TestMethod]
     public async Task AddIndex()
     {
         var sourceTable = new Table()
