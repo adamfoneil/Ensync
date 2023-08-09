@@ -1,9 +1,7 @@
 ﻿using Ensync.Core.Abstract;
-using Ensync.Core.Extensions;
 using Ensync.Core.DbObjects;
-
+using Ensync.Core.Extensions;
 using Index = Ensync.Core.DbObjects.Index;
-using System.Linq;
 
 namespace Ensync.Core;
 
@@ -13,7 +11,7 @@ public class Schema
 
     public Dictionary<string, Table> TableDictionary => Tables.ToDictionary(tbl => tbl.Name);
 
-    public IEnumerable<(Table Parent, ForeignKey ForeignKey)> ForeignKeys => Tables.SelectMany(tbl => tbl.ForeignKeys, (tbl, fk) => (tbl, fk));
+    public IEnumerable<(Table Parent, ForeignKey ForeignKey)> ForeignKeys => Tables.GetForeignKeys();
 
     public async Task<IEnumerable<ScriptAction>> CompareAsync(Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
@@ -41,9 +39,17 @@ public class Schema
         DropTables(results, Tables, targetSchema, scriptBuilder);
         DropColumns(results, Tables, targetSchema, scriptBuilder);
         DropIndexes(results, Tables, targetSchema, scriptBuilder);
-        // DropForeignKeys
+        DropForeignKeys(results, Tables, targetSchema, scriptBuilder);
 
         return results;
+    }
+
+    private static void DropForeignKeys(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    {
+        results.AddRange(targetSchema.ForeignKeys.Except(sourceTables.GetForeignKeys()).Select(fkInfo => new ScriptAction(ScriptActionType.Drop, fkInfo.ForeignKey)
+        {
+            Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, fkInfo.Parent, fkInfo.ForeignKey)
+        }));
     }
 
     private void AlterColumns(List<ScriptAction> results, IEnumerable<Table> tables, Schema targetSchema, SqlScriptBuilder scriptBuilder)

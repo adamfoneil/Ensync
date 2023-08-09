@@ -1,9 +1,6 @@
 ﻿using Ensync.Core.Extensions;
-using Ensync.Core.DbObjects;
 using Ensync.SqlServer;
 using SqlServer.LocalDb;
-using Index = Ensync.Core.DbObjects.Index;
-using Ensync.Core;
 
 namespace Testing.Core;
 
@@ -20,61 +17,7 @@ public class Scripting
     [TestMethod]
     public async Task CreateTables()
     {
-        Table employeeTypeTable = new()
-        {
-            Name = "dbo.EmployeeType",
-            Columns = new Column[]
-            {
-                new() { Name = "Id", DataType = "int identity(1,1)", IsNullable = false },
-                new() { Name = "Name", DataType = "nvarchar(50)", IsNullable = false }
-            }
-        };
-
-        Table employeeTable = new()
-        {
-            Name = "dbo.Employee",
-            Columns = new Column[]
-            {
-                new() { Name = "Id", DataType = "int identity(1,1)", IsNullable = false },
-                new() { Name = "FirstName", DataType = "nvarchar(50)", IsNullable = false  },
-                new() { Name = "LastName", DataType = "nvarchar(50)", IsNullable = false },
-                new() { Name = "EmployeeTypeId", DataType = "int", IsNullable = false }
-            },
-            Indexes = new Index[]
-            {
-                new()
-                {
-                    Name = "PK_Employee",
-                    IndexType = IndexType.PrimaryKey,
-                    Columns = new Index.Column[]
-                    {
-                        new() { Name = "Id" }
-                    }
-                }
-            },
-            ForeignKeys = new ForeignKey[]
-            {
-                new()
-                {
-                    ReferencedTable = employeeTypeTable,
-                    Name = "FK_Employee_EmployeeType",
-                    CascadeDelete = true,
-                    Columns = new ForeignKey.Column[]
-                    {
-                        new() { ReferencedName = "Id", ReferencingName = "EmployeeTypeId" }
-                    }
-                }
-            }
-        };
-
-        var source = new Schema()
-        {
-            Tables = new Table[]
-            {
-                employeeTable,
-                employeeTypeTable
-            }
-        };
+        var source = EmployeeSchema.Instance;
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(Diffs.DbName));
         var actions = (await source.CreateAsync(scriptBuilder)).ToArray();

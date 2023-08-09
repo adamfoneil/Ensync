@@ -307,4 +307,20 @@ public class Diffs
             "DROP INDEX [IX_Hello] ON [dbo].[Whatever]"
         }));
     }
+
+    [TestMethod]
+    public async Task DropForeignKey()
+    {
+        var source = EmployeeSchema.Instance;
+        source.TableDictionary["dbo.Employee"].ForeignKeys = Enumerable.Empty<ForeignKey>();
+        var target = EmployeeSchema.Instance;
+
+        var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+        var script = await source.CompareAsync(target, scriptBuilder);
+        Assert.IsTrue(script.ToSqlStatements(scriptBuilder).SequenceEqual(new[]
+        {
+            "ALTER TABLE [dbo].[Employee] DROP CONSTRAINT [FK_Employee_EmployeeType]"
+        }));
+
+    }
 }
