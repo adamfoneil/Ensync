@@ -1,7 +1,7 @@
 ﻿using Ensync.Core.Abstract;
-using Ensync.Core.Models;
+using Ensync.Core.DbObjects;
 
-using Index = Ensync.Core.Models.Index;
+using Index = Ensync.Core.DbObjects.Index;
 
 namespace Ensync.SqlServer;
 

@@ -1,7 +1,8 @@
 ﻿using Ensync.Core.Abstract;
 using Ensync.Core.Extensions;
+using Ensync.Core.DbObjects;
 
-namespace Ensync.Core.Models;
+namespace Ensync.Core;
 
 public class Schema
 {
@@ -12,7 +13,7 @@ public class Schema
     public IEnumerable<(Table Parent, ForeignKey ForeignKey)> ForeignKeys => Tables.SelectMany(tbl => tbl.ForeignKeys, (tbl, fk) => (tbl, fk));
 
     public async Task<IEnumerable<ScriptAction>> CompareAsync(Schema targetSchema, SqlScriptBuilder scriptBuilder)
-    {       
+    {
         ArgumentNullException.ThrowIfNull(nameof(targetSchema));
         ArgumentNullException.ThrowIfNull(nameof(scriptBuilder));
 
@@ -25,7 +26,7 @@ public class Schema
 
         AddTables(results, Tables, targetSchema, scriptBuilder);
         AddColumns(results, Tables, targetSchema, scriptBuilder);
-        // AddIndexes
+        AddIndexes(results, Tables, targetSchema, scriptBuilder);
         // AddChecks
         AddForeignKeys(results, Tables, targetSchema, scriptBuilder);
 
@@ -34,9 +35,9 @@ public class Schema
         // AlterChecks
         // AlterForeignKeys
 
-        // DropTables
+        DropTables(results, Tables, targetSchema, scriptBuilder);
         DropColumns(results, Tables, targetSchema, scriptBuilder);
-        // DropIndexes
+        DropIndexes(results, Tables, targetSchema, scriptBuilder);
         // DropForeignKeys
 
         return results;
@@ -45,7 +46,7 @@ public class Schema
     public async Task<IEnumerable<ScriptAction>> CreateAsync(SqlScriptBuilder scriptBuilder)
     {
         var target = new Schema();
-        return await CompareAsync(target, scriptBuilder);        
+        return await CompareAsync(target, scriptBuilder);
     }
 
     public async Task<string> CreateScriptAsync(SqlScriptBuilder scriptBuilder, string separator)
@@ -70,19 +71,37 @@ public class Schema
         }
     }
 
+    private void AddIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    {
+        var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
+
+        results.AddRange(commonTables.SelectMany(tblPair => tblPair.Source.Indexes.Except(tblPair.Target.Indexes))
+            .Select(ndx => new ScriptAction(ScriptActionType.Create, ndx)
+            {
+                Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, ndx.Parent, ndx),
+            }));
+    }
+
+    private void DropIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    {
+        var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
+
+        results.AddRange(commonTables.SelectMany(tblPair => tblPair.Target.Indexes.Except(tblPair.Source.Indexes))
+            .Select(ndx => new ScriptAction(ScriptActionType.Drop, ndx)
+            {
+                Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, ndx.Parent, ndx)
+            }));
+    }
+
     private void AddForeignKeys(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
-        var fks = sourceTables.SelectMany(t => t.ForeignKeys).ToArray();
-        var fks1 = fks.Where(ReferencedTableCreatedOrExists);
-        var fks2 = fks1.Except(TargetForeignKeys());
-
         results.AddRange(sourceTables.SelectMany(tbl => tbl.ForeignKeys
             .Where(ReferencedTableCreatedOrExists)
             .Except(TargetForeignKeys())
             .Select(fk => new ScriptAction(ScriptActionType.Create, fk)
-        {
-            Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, tbl, fk)
-        })));
+            {
+                Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, tbl, fk)
+            })));
 
         bool ReferencedTableCreatedOrExists(ForeignKey key)
         {
@@ -93,13 +112,21 @@ public class Schema
         }
 
         IEnumerable<ForeignKey> TargetForeignKeys() => targetSchema.Tables.SelectMany(tbl => tbl.ForeignKeys);
-    }    
+    }
 
     private void AddTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
         results.AddRange(sourceTables.Except(targetSchema.Tables).Select(tbl => new ScriptAction(ScriptActionType.Create, tbl)
         {
             Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, null, tbl)
+        }));
+    }
+
+    private void DropTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    {
+        results.AddRange(targetSchema.Tables.Except(sourceTables).Select(tbl => new ScriptAction(ScriptActionType.Drop, tbl)
+        {
+            Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, null, tbl)
         }));
     }
 
@@ -112,7 +139,7 @@ public class Schema
             Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, tablePair.Source, col)
         })));
     }
-        
+
     private void DropColumns(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
         var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);

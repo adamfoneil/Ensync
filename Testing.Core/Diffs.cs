@@ -1,10 +1,10 @@
 ﻿using Ensync.Core;
 using Ensync.Core.Extensions;
-using Ensync.Core.Models;
+using Ensync.Core.DbObjects;
 using Ensync.SqlServer;
 using SqlServer.LocalDb;
 
-using Index = Ensync.Core.Models.Index;
+using Index = Ensync.Core.DbObjects.Index;
 
 namespace Testing.Core;
 
@@ -106,6 +106,25 @@ public class Diffs
     }
 
     [TestMethod]
+    public async Task DropEmptyTable()
+    {
+        var targetTable = new Table()
+        {
+            Name = "dbo.Whatever"
+        };
+
+        var sourceSchema = new Schema();
+        var targetSchema = new Schema() {  Tables = new Table[] { targetTable } };
+
+        var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+        var script = await sourceSchema.CompareAsync(targetSchema, scriptBuilder);
+        Assert.IsTrue(script.ToSqlStatements().SequenceEqual(new[]
+        {
+            "DROP TABLE [dbo].[Whatever]"
+        }));
+    }
+
+    [TestMethod]
     public async Task DropColumnWithIndex()
     {
         var sourceColumns = new Column[]
@@ -165,6 +184,58 @@ public class Diffs
     [TestMethod]
     public async Task AddIndex()
     {
-        Assert.Fail();
+        var sourceTable = new Table()
+        {
+            Name = "dbo.Whatever",
+            Indexes = new Index[]
+            {
+                new() { Name = "IX_Hello", IndexType = IndexType.NonUnique, Columns = new Index.Column[] 
+                { 
+                    new() { Name = "Column1" },
+                    new() { Name = "Column2" }
+                }}
+            }
+        };
+
+        var targetTable = new Table()
+        {
+            Name = "dbo.Whatever"
+        };
+
+        var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+        var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
+        Assert.IsTrue(script.ToSqlStatements().SequenceEqual(new[]
+        {
+            "CREATE INDEX [IX_Hello] ON [dbo].[Whatever] ([Column1] ASC, [Column2] ASC)"
+        }));
+    }
+
+    [TestMethod]
+    public async Task DropIndex()
+    {
+        var sourceTable = new Table()
+        {
+            Name = "dbo.Whatever"            
+        };
+
+        var targetTable = new Table()
+        {
+            Name = "dbo.Whatever",
+            Indexes = new Index[]
+            {
+                new() { Name = "IX_Hello", IndexType = IndexType.NonUnique, Columns = new Index.Column[]
+                {
+                    new() { Name = "Column1" },
+                    new() { Name = "Column2" }
+                }}
+            }
+        };
+
+        var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+        var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
+        Assert.IsTrue(script.ToSqlStatements().SequenceEqual(new[]
+        {
+            "DROP INDEX [IX_Hello] ON [dbo].[Whatever]"
+        }));
     }
 }

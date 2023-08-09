@@ -1,5 +1,5 @@
 ﻿using Ensync.Core.Abstract;
-using Ensync.Core.Models;
+using Ensync.Core.DbObjects;
 
 namespace Ensync.SqlServer;
 

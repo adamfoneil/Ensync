@@ -1,6 +1,4 @@
-﻿using Ensync.Core.Models;
-
-namespace Ensync.Core.Abstract;
+﻿namespace Ensync.Core.Abstract;
 
 public enum DbObjectType
 {

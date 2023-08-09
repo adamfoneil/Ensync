@@ -1,6 +1,6 @@
 ﻿using Ensync.Core.Abstract;
 
-namespace Ensync.Core.Models;
+namespace Ensync.Core.DbObjects;
 
 public class Table : DbObject
 {

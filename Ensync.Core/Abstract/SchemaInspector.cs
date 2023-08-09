@@ -1,4 +1,4 @@
-﻿using Ensync.Core.Models;
+﻿using Ensync.Core.DbObjects;
 
 namespace Ensync.Core.Abstract;
 

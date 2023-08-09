@@ -1,6 +1,6 @@
 namespace Testing.Core;
 
-using Ensync.Core.Models;
+using Ensync.Core.DbObjects;
 
 [TestClass]
 public class DbObjects

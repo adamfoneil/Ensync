@@ -1,10 +1,10 @@
 ﻿using Dapper;
 using Ensync.Core.Abstract;
-using Ensync.Core.Models;
+using Ensync.Core.DbObjects;
 using Ensync.SqlServer.Internal;
 using Microsoft.Data.SqlClient;
 
-using Index = Ensync.Core.Models.Index;
+using Index = Ensync.Core.DbObjects.Index;
 
 namespace Ensync.SqlServer;
 
