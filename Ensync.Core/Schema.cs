@@ -2,6 +2,8 @@
 using Ensync.Core.Extensions;
 using Ensync.Core.DbObjects;
 
+using Index = Ensync.Core.DbObjects.Index;
+
 namespace Ensync.Core;
 
 public class Schema
@@ -84,14 +86,16 @@ public class Schema
 
     private static void DropIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
-        var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
-        var alreadyDroppedIndexes = results.Where(a => a.Object is DbObjects.Index && a.Action == ScriptActionType.Drop).Select(a => a.Object);
+        var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);        
+        var alreadyDroppedIndexes = results.Where(IsDrop).SelectMany(a => a.Statements.Select(st => st.AffectedObject).OfType<Index>());
 
         results.AddRange(commonTables.SelectMany(tblPair => tblPair.Target.Indexes.Except(tblPair.Source.Indexes.Concat(alreadyDroppedIndexes)))
             .Select(ndx => new ScriptAction(ScriptActionType.Drop, ndx)
             {
                 Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, ndx.Parent, ndx)
             }));
+
+        bool IsDrop(ScriptAction action) => action.Action == ScriptActionType.Drop;
     }
 
     private void AddForeignKeys(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)

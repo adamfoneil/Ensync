@@ -1,4 +1,6 @@
-﻿namespace Ensync.Core.Abstract;
+﻿using System.Runtime.Remoting;
+
+namespace Ensync.Core.Abstract;
 
 public class DatabaseMetadata
 {
@@ -36,34 +38,34 @@ public abstract class SqlScriptBuilder
         Metadata = await GetMetadataAsync();
     }
 
-    public IEnumerable<string> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child) => actionType switch
+    public IEnumerable<(string, DbObject?)> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child) => actionType switch
     {
         ScriptActionType.Create => 
             Syntax[child.Type].Create.Invoke(parent, child),
 
         ScriptActionType.Alter =>
-            DropDependencies(Syntax, schema, parent, child)
+            DropDependencies(Syntax, schema, child)
             .Concat(Syntax[child.Type].Alter.Invoke(parent, child))
-            .Concat(CreateDependencies(Syntax, schema, parent, child)),
+            .Concat(CreateDependencies(Syntax, schema, child)),
 
         ScriptActionType.Drop =>
-            DropDependencies(Syntax, schema, parent, child)
+            DropDependencies(Syntax, schema, child)
             .Concat(Syntax[child.Type].Drop.Invoke(parent, child)),
 
         _ => throw new NotSupportedException()
     };
 
-    private static IEnumerable<string> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject? parent, DbObject child) =>
+    private static IEnumerable<(string, DbObject?)> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child) =>
         child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Drop(obj.Parent, obj.Child));
 
-    private static IEnumerable<string> CreateDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject? parent, DbObject child) =>
+    private static IEnumerable<(string, DbObject?)> CreateDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child) =>
         child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Create(obj.Parent, obj.Child));
 
     public class SqlStatements
     {       
         public Func<DbObject, string>? Definition { get; init; }
-        public required Func<DbObject?, DbObject, IEnumerable<string>> Create { get; init; }
-        public required Func<DbObject?, DbObject, IEnumerable<string>> Alter { get; init; }
-        public required Func<DbObject?, DbObject, IEnumerable<string>> Drop { get; init; }
+        public required Func<DbObject?, DbObject, IEnumerable<(string, DbObject?)>> Create { get; init; }
+        public required Func<DbObject?, DbObject, IEnumerable<(string, DbObject?)>> Alter { get; init; }
+        public required Func<DbObject?, DbObject, IEnumerable<(string, DbObject?)>> Drop { get; init; }
     }
 }

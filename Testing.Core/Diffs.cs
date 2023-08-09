@@ -58,8 +58,8 @@ public class Diffs
         };
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
-        var statements = scriptBuilder.GetScript(ScriptActionType.Drop, schema, null, parent).ToArray();
-        Assert.IsTrue(statements.SequenceEqual(new[]
+        var statements = scriptBuilder.GetScript(ScriptActionType.Drop, schema, null, parent);
+        Assert.IsTrue(statements.Select(item => item.Item1).SequenceEqual(new[]
         {
             "ALTER TABLE [dbo].[Child] DROP CONSTRAINT [FK_Child_Parent]",
             "DROP TABLE [dbo].[Parent]"

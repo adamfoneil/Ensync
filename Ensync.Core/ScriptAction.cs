@@ -19,10 +19,13 @@ public class ScriptAction
 
     public ScriptActionType Action { get; init; }
     public DbObject Object { get; init; }
-    public required IEnumerable<string> Statements { get; init; }
+    public required IEnumerable<(string Sql, DbObject? AffectedObject)> Statements { get; init; }
     /// <summary>
     /// creates a warning when dropping a table with data
     /// </summary>
     public bool IsDestructive { get; init; }
+    /// <summary>
+    /// tells you number rows that will be lost/affected with the drop
+    /// </summary>
     public string? Message { get; init; }
 }

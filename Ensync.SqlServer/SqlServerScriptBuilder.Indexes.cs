@@ -14,7 +14,7 @@ public partial class SqlServerScriptBuilder
         return $"({columnList})";
     }    
 
-    private IEnumerable<string> CreateIndex(DbObject? parent, DbObject child)
+    private IEnumerable<(string, DbObject?)> CreateIndex(DbObject? parent, DbObject child)
     {
         var index = child as Index ?? throw new Exception("Unexpected object type");
         var statement = index.IndexType switch
@@ -26,7 +26,7 @@ public partial class SqlServerScriptBuilder
             _ => throw new NotSupportedException($"Unrecognized index type {index.IndexType}")
         };
 
-        yield return statement;
+        yield return (statement, index);
     }
 
     private IEnumerable<string> AlterIndex(DbObject? parent, DbObject child)
@@ -34,7 +34,7 @@ public partial class SqlServerScriptBuilder
         throw new NotImplementedException();
     }
 
-    private IEnumerable<string> DropIndex(DbObject? parent, DbObject child)
+    private IEnumerable<(string, DbObject?)> DropIndex(DbObject? parent, DbObject child)
     {
         var index = child as Index ?? throw new Exception("Unexpected object type");
 
@@ -45,6 +45,6 @@ public partial class SqlServerScriptBuilder
             _ => throw new NotSupportedException($"Unrecognized index type {index.IndexType}")
         };
 
-        yield return statement;
+        yield return (statement, index);
     }
 }
