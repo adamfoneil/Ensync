@@ -1,0 +1,21 @@
+{
+    "AssemblyPath" : "./bin/Debug/Entities.dll",
+    "Targets" : [
+        {
+            "Name" : "Local",            
+            "Type": "SqlServer", 
+            "Expression" : "Server=(localdb)\\mssqllocaldb;Database=Hello;Integrated Security=true"
+        },
+        {
+            "Name": "QA",
+            "Type" : "SqlServer", 
+            "Expression" : "@ConnectionStrings:MyQA"            
+        },
+        {
+            "Name" : "Prod",
+            "IsProduction" : true,            
+            "Type": "SqlServer", 
+            "Expression" : "@ConnectionStrings:MyProduction"            
+        }
+    ]
+}

@@ -19,6 +19,10 @@ public class ScriptAction
 
     public ScriptActionType Action { get; init; }
     public DbObject Object { get; init; }
+    /// <summary>
+    /// the AffectedObject is usually the Object, but it will be different when the Statement
+    /// is dropping or rebuilding a dependency
+    /// </summary>
     public required IEnumerable<(string Sql, DbObject? AffectedObject)> Statements { get; init; }
     /// <summary>
     /// creates a warning when dropping a table with data
