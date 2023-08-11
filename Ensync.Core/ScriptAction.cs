@@ -32,4 +32,16 @@ public class ScriptAction
     /// tells you number rows that will be lost/affected with the drop
     /// </summary>
     public string? Message { get; init; }
+
+	public override bool Equals(object? obj)
+	{
+		if (obj is ScriptAction action)
+        {
+            return action.Action == Action && action.Object == Object;
+        }
+
+        return false;
+	}
+
+    public override int GetHashCode() => (Action.ToString() + Object.Name).GetHashCode();	
 }

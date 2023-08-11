@@ -11,7 +11,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing.Core", "Testing.Cor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ensync.SqlServer", "Ensync.SqlServer\Ensync.SqlServer.csproj", "{10471B67-43B3-4E6A-9377-27DAD5D72ACC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ensync.UI.WPF", "Ensync.UI.WPF\Ensync.UI.WPF.csproj", "{6BE8D8E1-6064-4B5B-B328-F72E80953F87}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ensync.UI.WPF", "Ensync.UI.WPF\Ensync.UI.WPF.csproj", "{6BE8D8E1-6064-4B5B-B328-F72E80953F87}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ensync.CLI", "Ensync.CLI\Ensync.CLI.csproj", "{972AE4EF-BD78-4042-AAA3-624884787065}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleDb", "SampleDb\SampleDb.csproj", "{31940ABA-4A3D-445A-B378-840D8F682A17}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +43,14 @@ Global
 		{6BE8D8E1-6064-4B5B-B328-F72E80953F87}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6BE8D8E1-6064-4B5B-B328-F72E80953F87}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6BE8D8E1-6064-4B5B-B328-F72E80953F87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{972AE4EF-BD78-4042-AAA3-624884787065}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{972AE4EF-BD78-4042-AAA3-624884787065}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{972AE4EF-BD78-4042-AAA3-624884787065}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{972AE4EF-BD78-4042-AAA3-624884787065}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31940ABA-4A3D-445A-B378-840D8F682A17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31940ABA-4A3D-445A-B378-840D8F682A17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31940ABA-4A3D-445A-B378-840D8F682A17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31940ABA-4A3D-445A-B378-840D8F682A17}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -16,13 +16,13 @@ public class Config
                 {
                     Name = "Local",
                     Type = "SqlServer",
-                    Expression = "Server=(localdb)\\mssqllocaldb;Database=Hello;Integrated Security=true"
+                    ConnectionString = "Server=(localdb)\\mssqllocaldb;Database=Hello;Integrated Security=true"
                 },
                 new Configuration.Target()
                 {
                     Name = "QA",
                     Type = "SqlServer",
-                    Expression = "@ConnectionStrings:QA"
+                    ConnectionString = "@ConnectionStrings:QA"
                 }
             }
         };

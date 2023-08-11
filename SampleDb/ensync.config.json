@@ -1,0 +1,10 @@
+{
+    "AssemblyPath" : ".\\bin\\Debug\\net7.0\\SampleDb.dll",
+    "DatabaseTargets" : [
+        {
+            "Name" : "local",
+            "Type" : "SqlServer",
+            "ConnectionString" : "(localdb)\\mssqllocaldb;Database=EnsyncSample;Integrated Security=true"
+        }
+    ]
+}
