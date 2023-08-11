@@ -1,8 +1,6 @@
 ﻿using Ensync.Core.Abstract;
 using Microsoft.Extensions.DependencyModel;
-using System.Buffers.Text;
 using System.Reflection;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Ensync.Dotnet7;
 
