@@ -1,6 +1,7 @@
 ﻿using Ensync.Core;
 using Ensync.Core.Abstract;
 using Ensync.Core.DbObjects;
+using Ensync.Dotnet7.Extensions;
 using Microsoft.Extensions.DependencyModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -92,13 +93,13 @@ public class AssemblySchemaInspector : SchemaInspector
 
 	public IEnumerable<(Type, string Message)> Errors { get; private set; } = Enumerable.Empty<(Type, string)>();
 
-	protected override async Task<IEnumerable<DbObject>> GetDbObjectsAsync()
+	protected override async Task<(IEnumerable<Table> Tables, IEnumerable<ForeignKey> ForeignKeys)> GetDbObjectsAsync()
 	{
 		await Task.CompletedTask;
 
 		var types = _assembly.GetExportedTypes().Where(TypeFilter);
 
-		List<DbObject> dbObjects = new();
+		List<Table> tables = new();
 		List<(Type, string)> errors = new();
 		var typeDictionary = types.ToDictionary(t => t.Name);
 
@@ -106,7 +107,7 @@ public class AssemblySchemaInspector : SchemaInspector
 		{
 			try
 			{
-				dbObjects.Add(BuildTable(type, typeDictionary));
+				tables.Add(BuildTable(type, typeDictionary));
 			}
 			catch (Exception exc)
 			{
@@ -115,46 +116,147 @@ public class AssemblySchemaInspector : SchemaInspector
 		}
 
 		Errors = errors;
-		return dbObjects;
+		return (tables, Enumerable.Empty<ForeignKey>());
 	}
 
-	private Table BuildTable(Type type, Dictionary<string, Type> typeDictionary) => new Table()
+	private Table BuildTable(Type type, Dictionary<string, Type> typeDictionary)
 	{
-		Name = GetTableName(type, "dbo"),
-		Columns = BuildColumns(type),
-		Indexes = BuildIndexes(type),
-		CheckConstraints = BuildCheckConstraints(type),
-		ForeignKeys = BuildForeignKeys(type, typeDictionary)
-	};
+		var nameParts = GetTableNameParts(type, "dbo");
+		var mappedProperties = MappedProperties(type);
 
-	private IEnumerable<ForeignKey> BuildForeignKeys(Type type, Dictionary<string, Type> typeDictionary)
+		return new Table()
+		{
+			Name = $"{nameParts.Schema}.{nameParts.Name}",
+			Columns = BuildColumns(mappedProperties),
+			Indexes = BuildIndexes(nameParts.BaseConstraintName, mappedProperties),
+			CheckConstraints = BuildCheckConstraints(type, nameParts.BaseConstraintName)			
+		};
+	}
+
+	private (string Schema, string Name, string BaseConstraintName) GetTableNameParts(Type type, string defaultSchema)
+	{
+		string name = (type.HasAttribute(out TableAttribute tableAttr)) ? tableAttr.Name : type.Name;
+
+		string schema =			
+			(tableAttr != null && !string.IsNullOrEmpty(tableAttr.Schema)) ? tableAttr.Schema :
+			defaultSchema;
+
+		var baseConstraintName = schema.Equals(defaultSchema) ? name : schema + name;
+
+		return (schema, name, baseConstraintName);
+	}
+
+	private static IEnumerable<PropertyInfo> MappedProperties(Type type) =>
+		type.GetProperties().Where(pi =>
+			(SupportedTypes.ContainsKey(pi.PropertyType) || pi.PropertyType.IsNullableEnum() || pi.PropertyType.IsEnum) &&
+			pi.CanWrite &&
+			!pi.HasAttribute<NotMappedAttribute>(out _));
+
+	private IEnumerable<Column> BuildColumns(IEnumerable<PropertyInfo> properties)
+	{
+		return properties.Select(pi => new Column()
+		{
+			Name = GetColumnName(pi),
+			IsNullable = pi.PropertyType.IsNullable() && !pi.HasAttribute<RequiredAttribute>(out _) && !pi.HasAttribute<KeyAttribute>(out _),
+			DataType = GetDataType(pi)
+		});
+
+		string GetColumnName(PropertyInfo pi)
+		{
+			var result = pi.Name;
+
+			if (pi.HasAttribute<ColumnAttribute>(out var columnAttribute) && !string.IsNullOrEmpty(columnAttribute.Name))
+			{
+				return columnAttribute.Name;
+			}
+
+			return result;
+		}
+
+		string GetDataType(PropertyInfo pi)
+		{
+			var result =
+				pi.HasAttribute<ColumnAttribute>(out var columnAttribute) && !string.IsNullOrWhiteSpace(columnAttribute.TypeName) ? columnAttribute.TypeName :
+				SupportedTypes.TryGetValue(pi.PropertyType, out var dataType) ? dataType :
+				pi.PropertyType.IsEnum ? "int" :
+				pi.PropertyType.IsNullableEnum() ? "int" :
+				throw new NotSupportedException($"Couldn't determine data type for {pi.DeclaringType!.Name}.{pi.Name}");
+
+			if (pi.PropertyType.Equals(typeof(string)))
+			{
+				result += (pi.HasAttribute<MaxLengthAttribute>(out var maxLen)) ? $"({maxLen.Length})" : "(max)";
+			}
+
+			return result;
+		}
+	}
+
+	private IEnumerable<Index> BuildIndexes(string constraintName, IEnumerable<PropertyInfo> mappedProperties)
+	{
+		IndexType alternateKeyType = IndexType.PrimaryKey;
+
+		var identityProperty = mappedProperties.SingleOrDefault(pi => pi.Name.Equals("Id"));
+		if (identityProperty is not null)
+		{
+			yield return new Index()
+			{
+				Name = $"PK_{constraintName}",
+				IndexType = IndexType.PrimaryKey,
+				Columns = new[] { new Index.Column() { Name = identityProperty.Name, Order = 1 }, }
+			};
+
+			alternateKeyType = IndexType.UniqueConstraint;
+		}
+
+		var keyColumns = mappedProperties.Where(pi => pi.HasAttribute<KeyAttribute>(out _));
+		if (keyColumns.Any())
+		{
+			var prefix = (alternateKeyType == IndexType.PrimaryKey) ? "PK" : "U";
+			yield return new Index()
+			{
+				Name = $"{prefix}_{constraintName}_{string.Join("_", keyColumns.Select(col => col.Name))}",
+				IndexType = alternateKeyType,
+				Columns = keyColumns.Select((col, index) => new Index.Column() { Name = col.Name, Order = index })
+			};
+		}
+
+		var fkColumns = mappedProperties.Where(pi => pi.HasAttribute<ForeignKeyAttribute>(out _));
+		foreach (var col in fkColumns)
+		{
+			yield return new Index()
+			{
+				Name = $"IX_{constraintName}_{col.Name}",
+				IndexType = IndexType.NonUnique,
+				Columns = new[] { new Index.Column() { Name  = col.Name, Order = 1 } }
+			};
+		}
+	}
+
+	/*
+	private IEnumerable<ForeignKey> BuildForeignKeys(IEnumerable<PropertyInfo> mappedProperties, Dictionary<string, Type> typeDictionary, string constraintName) =>
+		mappedProperties
+			.Where(pi => pi.HasAttribute<ForeignKeyAttribute>(out var fkAttr) && typeDictionary.ContainsKey(fkAttr.Name))
+			.Select(pi => new
+			{
+				Property = pi,
+				ReferencedTableName = pi.GetCustomAttribute<ForeignKeyAttribute>()!.Name
+			}).Select(item => new ForeignKey()
+			{
+				Name = $"FK_{constraintName}_{item.Property.Name}",
+				//ReferencedTable = typeDictionary[item.ReferencedTableName]
+				//Columns = new[] { new ForeignKey.Column() { ReferencingName = item.Property} }
+			});*/
+
+	private IEnumerable<CheckConstraint> BuildCheckConstraints(Type type, string constraintName)
 	{
 		throw new NotImplementedException();
 	}
 
-	private IEnumerable<CheckConstraint> BuildCheckConstraints(Type type)
+	private static Dictionary<Type, string> SupportedTypes
 	{
-		throw new NotImplementedException();
-	}
-
-	private IEnumerable<Index> BuildIndexes(Type type)
-	{
-		throw new NotImplementedException();
-	}
-
-	private IEnumerable<Column> BuildColumns(Type type)
-	{
-		throw new NotImplementedException();
-	}
-
-	private string GetTableName(Type type, string defaultSchema)
-	{
-		throw new NotImplementedException();
-	}
-
-	private static Dictionary<Type, string> GetSupportedTypes()
-	{
-		var nullableBaseTypes = new Dictionary<Type, string>()
+		get
+		{
+			var nullableBaseTypes = new Dictionary<Type, string>()
 			{
 				{ typeof(int), "int" },
 				{ typeof(long), "bigint" },
@@ -167,29 +269,30 @@ public class AssemblySchemaInspector : SchemaInspector
 				{ typeof(Guid), "uniqueidentifier" }
 			};
 
-		// help from https://stackoverflow.com/a/23402195/2023653
-		IEnumerable<Type> getBothTypes(Type type)
-		{
-			yield return type;
-			yield return typeof(Nullable<>).MakeGenericType(type);
-		}
+			// help from https://stackoverflow.com/a/23402195/2023653
+			IEnumerable<Type> getBothTypes(Type type)
+			{
+				yield return type;
+				yield return typeof(Nullable<>).MakeGenericType(type);
+			}
 
-		var results = nullableBaseTypes.Select(kp => new
-		{
-			Types = getBothTypes(kp.Key),
-			SqlType = kp.Value
-		}).SelectMany(item => item.Types.Select(t => new
-		{
-			Type = t,
-			item.SqlType
-		}));
+			var results = nullableBaseTypes.Select(kp => new
+			{
+				Types = getBothTypes(kp.Key),
+				SqlType = kp.Value
+			}).SelectMany(item => item.Types.Select(t => new
+			{
+				Type = t,
+				item.SqlType
+			}));
 
-		var result = results.ToDictionary(item => item.Type, item => item.SqlType);
+			var result = results.ToDictionary(item => item.Type, item => item.SqlType);
 
-		// string is special in that it's already nullable
-		result.Add(typeof(string), "nvarchar");
-		result.Add(typeof(byte[]), "varbinary");
+			// string is special in that it's already nullable
+			result.Add(typeof(string), "nvarchar");
+			result.Add(typeof(byte[]), "varbinary");
 
-		return result;
+			return result;
+		}		
 	}
 }

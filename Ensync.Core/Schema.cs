@@ -8,10 +8,9 @@ namespace Ensync.Core;
 public class Schema
 {
     public IEnumerable<Table> Tables { get; set; } = Enumerable.Empty<Table>();
+    public IEnumerable<ForeignKey> ForeignKeys { get; set; } = Enumerable.Empty<ForeignKey>();
 
     public Dictionary<string, Table> TableDictionary => Tables.ToDictionary(tbl => tbl.Name);
-
-    public IEnumerable<(Table Parent, ForeignKey ForeignKey)> ForeignKeys => Tables.GetForeignKeys();
 
     public async Task<IEnumerable<ScriptAction>> CompareAsync(Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
@@ -29,7 +28,7 @@ public class Schema
         AddColumns(results, Tables, targetSchema, scriptBuilder);
         AddIndexes(results, Tables, targetSchema, scriptBuilder);
         // AddChecks
-        AddForeignKeys(results, Tables, targetSchema, scriptBuilder);
+        AddForeignKeys(results, ForeignKeys, targetSchema, scriptBuilder);
 
         AlterColumns(results, Tables, targetSchema, scriptBuilder);
         // AlterIndexes
@@ -39,20 +38,20 @@ public class Schema
         DropTables(results, Tables, targetSchema, scriptBuilder);
         DropColumns(results, Tables, targetSchema, scriptBuilder);
         DropIndexes(results, Tables, targetSchema, scriptBuilder);
-        DropForeignKeys(results, Tables, targetSchema, scriptBuilder);
+        DropForeignKeys(results, ForeignKeys, targetSchema, scriptBuilder);
 
         return results;
     }
 
-    private static void DropForeignKeys(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
-    {
-        results.AddRange(targetSchema.ForeignKeys.Except(sourceTables.GetForeignKeys()).Select(fkInfo => new ScriptAction(ScriptActionType.Drop, fkInfo.ForeignKey)
+    private static void DropForeignKeys(List<ScriptAction> results, IEnumerable<ForeignKey> foreignKeys, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+	{
+        results.AddRange(targetSchema.ForeignKeys.Except(foreignKeys).Select(fk => new ScriptAction(ScriptActionType.Drop, fk)
         {
-            Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, fkInfo.Parent, fkInfo.ForeignKey)
+            Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, fk.Parent, fk)
         }));
     }
 
-    private void AlterColumns(List<ScriptAction> results, IEnumerable<Table> tables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    private static void AlterColumns(List<ScriptAction> results, IEnumerable<Table> tables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
         var commonTables = GetCommonTables(tables, targetSchema.Tables);
         var commonColumns = commonTables.SelectMany(GetCommonColumns);
@@ -65,7 +64,7 @@ public class Schema
 
     private static bool IsAltered((Column Source, Column Target) columnPair) => columnPair.Source.IsAltered(columnPair.Target).Result;
     
-    private IEnumerable<(Column Source, Column Target)> GetCommonColumns((Table Source, Table Target) tablePair) =>
+    private static IEnumerable<(Column Source, Column Target)> GetCommonColumns((Table Source, Table Target) tablePair) =>
         tablePair.Source.Columns.Join(
             tablePair.Target.Columns,
             col => col, col => col,
@@ -93,8 +92,7 @@ public class Schema
         foreach (var table in schema.Tables)
         {
             foreach (var col in table.Columns) col.Parent ??= table;
-            foreach (var index in table.Indexes) index.Parent ??= table;
-            foreach (var fk in table.ForeignKeys) fk.Parent ??= table;
+            foreach (var index in table.Indexes) index.Parent ??= table;            
             foreach (var chk in table.CheckConstraints) chk.Parent ??= table;
         }
     }
@@ -124,15 +122,15 @@ public class Schema
         static bool IsDrop(ScriptAction action) => action.Action == ScriptActionType.Drop;
     }
 
-    private void AddForeignKeys(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+    private static void AddForeignKeys(List<ScriptAction> results, IEnumerable<ForeignKey> foreignKeys, Schema targetSchema, SqlScriptBuilder scriptBuilder)
     {
-        results.AddRange(sourceTables.SelectMany(tbl => tbl.ForeignKeys
+        results.AddRange(foreignKeys
             .Where(ReferencedTableCreatedOrExists)
-            .Except(TargetForeignKeys())
+            .Except(targetSchema.ForeignKeys)
             .Select(fk => new ScriptAction(ScriptActionType.Create, fk)
             {
-                Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, tbl, fk)
-            })));
+                Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, fk.Parent, fk)
+            }));
 
         bool ReferencedTableCreatedOrExists(ForeignKey key)
         {
@@ -141,8 +139,6 @@ public class Schema
 
             return false;
         }
-
-        IEnumerable<ForeignKey> TargetForeignKeys() => targetSchema.Tables.SelectMany(tbl => tbl.ForeignKeys);
     }
 
     private static void AddTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)

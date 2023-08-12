@@ -58,19 +58,7 @@ internal static class EmployeeSchema
         {
             var employeeTypeTable = EmployeeTypeTable;
             var employeeTable = EmployeeTable;
-            employeeTable.ForeignKeys = new ForeignKey[]
-            {
-                new()
-                {
-                    ReferencedTable = employeeTypeTable,
-                    Name = "FK_Employee_EmployeeType",
-                    CascadeDelete = true,
-                    Columns = new ForeignKey.Column[]
-                    {
-                        new() { ReferencedName = "Id", ReferencingName = "EmployeeTypeId" }
-                    }
-                }
-            };
+            
 
             return new Schema()
             {
@@ -78,7 +66,21 @@ internal static class EmployeeSchema
                 {
                     employeeTable, 
                     employeeTypeTable
-                }
+                },
+                ForeignKeys = new ForeignKey[]
+                {
+					new()
+				    {
+                        Parent = employeeTable,
+					    ReferencedTable = employeeTypeTable,
+					    Name = "FK_Employee_EmployeeType",
+					    CascadeDelete = true,
+					    Columns = new ForeignKey.Column[]
+					    {
+						    new() { ReferencedName = "Id", ReferencingName = "EmployeeTypeId" }
+					    }
+				    }
+				}
             };
         }
     }

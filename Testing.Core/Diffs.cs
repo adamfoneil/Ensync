@@ -38,24 +38,25 @@ public class Diffs
             Columns = new[]
             {
                 new Column() { Name = "ParentId" }
-            }.ToHashSet(),
-            ForeignKeys = new[]
-            {
-                new ForeignKey()
-                {
-                    Name = "FK_Child_Parent",
-                    ReferencedTable = parent,
-                    Columns = new ForeignKey.Column[]
-                    {
-                        new() { ReferencedName = "Id", ReferencingName = "ParentId" }
-                    }
-                }
-            }.ToHashSet()
+            }.ToHashSet()            
         };
 
         var schema = new Schema()
         {
-            Tables = new[] { parent, child }.ToHashSet()
+            Tables = new[] { parent, child }.ToHashSet(),
+            ForeignKeys = new[]
+			{
+				new ForeignKey()
+				{
+					Name = "FK_Child_Parent",
+                    Parent = child,
+					ReferencedTable = parent,
+					Columns = new ForeignKey.Column[]
+					{
+						new() { ReferencedName = "Id", ReferencingName = "ParentId" }
+					}
+				}
+			}			
         };
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
@@ -312,7 +313,7 @@ public class Diffs
     public async Task DropForeignKey()
     {
         var source = EmployeeSchema.Instance;
-        source.TableDictionary["dbo.Employee"].ForeignKeys = Enumerable.Empty<ForeignKey>();
+        source.ForeignKeys = Enumerable.Empty<ForeignKey>();
         var target = EmployeeSchema.Instance;
 
         var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));

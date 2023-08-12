@@ -4,7 +4,7 @@ namespace Ensync.Core.Abstract;
 
 public abstract class SchemaInspector
 {
-	protected abstract Task<IEnumerable<DbObject>> GetDbObjectsAsync();
+	protected abstract Task<(IEnumerable<Table> Tables, IEnumerable<ForeignKey> ForeignKeys)> GetDbObjectsAsync();
 
 	public async Task<Schema> GetSchemaAsync()
 	{ 
@@ -12,7 +12,8 @@ public abstract class SchemaInspector
 
 		return new()
 		{
-			Tables = objects.OfType<Table>()
+			Tables = objects.Tables,
+			ForeignKeys = objects.ForeignKeys
 		};
 	}
 }

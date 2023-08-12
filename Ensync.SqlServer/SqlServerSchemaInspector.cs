@@ -17,7 +17,7 @@ public class SqlServerSchemaInspector : SchemaInspector
 		_connectionString = connectionString;
 	}
 
-	protected override async Task<IEnumerable<DbObject>> GetDbObjectsAsync()
+	protected override async Task<(IEnumerable<Table> Tables, IEnumerable<ForeignKey> ForeignKeys)> GetDbObjectsAsync()
 	{
 		using var cn = new SqlConnection(_connectionString);
 
@@ -55,11 +55,9 @@ public class SqlServerSchemaInspector : SchemaInspector
 
 			t.CheckConstraints = checkLookup[t.ObjectId].ToArray();
 			foreach (var c in t.CheckConstraints) c.Parent = t;
-
-			t.ForeignKeys = fkLookup[t.ObjectId].ToArray();		
 		}
 
-		return tables;
+		return (tables, foreignKeys);
 	}
 
 	private static async Task<IEnumerable<IndexColumnResult>> GetIndexColumnsAsync(SqlConnection cn)
