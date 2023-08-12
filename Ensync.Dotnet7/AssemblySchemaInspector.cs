@@ -54,17 +54,17 @@ public class AssemblySchemaInspector : SchemaInspector
 		return null;
 	}
 
-	private (bool Success, string Path) GetNugetPackageDll(RuntimeLibrary library)
+	private static (bool Success, string Path) GetNugetPackageDll(RuntimeLibrary library)
 	{
 		var packagePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
 		   ".nuget", "packages", library.Name.ToLower(), library.Version);
 
-		var assemblyPath = Path.Combine(packagePath, library.RuntimeAssemblyGroups.First().RuntimeFiles.First().Path);
+		var assemblyPath = Path.Combine(packagePath, library.RuntimeAssemblyGroups[0].RuntimeFiles[0].Path);
 
 		return (File.Exists(assemblyPath), assemblyPath);
 	}
 
-	private (bool Success, string Path) GetLocalDll(string name)
+	private static (bool Success, string Path) GetLocalDll(string name)
 	{
 		var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{name}.dll");
 		return (File.Exists(path), path);
