@@ -4,7 +4,7 @@ namespace Ensync.Core.DbObjects;
 
 public class CheckConstraint : DbObject
 {
-    public override DbObjectType Type => DbObjectType.CheckConstraint;
+	public override DbObjectType Type => DbObjectType.CheckConstraint;
 
-    public string Expression { get; init; } = default!;
+	public string Expression { get; init; } = default!;
 }

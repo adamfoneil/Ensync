@@ -18,7 +18,7 @@ internal class Program
 			var config = FindConfig(o.ConfigPath);
 			var targets = config.Data.DatabaseTargets.ToDictionary(item => item.Name);
 
-			var source = await GetSourceSchemaAsync(o, config.BasePath, config.Data, targets);					
+			var source = await GetSourceSchemaAsync(o, config.BasePath, config.Data, targets);
 			var target = await GetDbSchemaAsync(o, config.Data, targets);
 			Console.WriteLine($"Merging from {source.Description} to {target.Description}");
 			Console.WriteLine();
@@ -31,7 +31,7 @@ internal class Program
 			switch (o.Action)
 			{
 				case Action.Preview:
-					PreviewChanges(statements);					
+					PreviewChanges(statements);
 					break;
 
 				case Action.Merge:
@@ -97,7 +97,7 @@ internal class Program
 		{
 			Console.ForegroundColor = color;
 		}
-		
+
 	}
 
 	private static void MergeChanges(Configuration.Target target, string[] statements)
@@ -111,7 +111,7 @@ internal class Program
 		var color = Console.ForegroundColor;
 
 		if (target.IsProduction)
-		{		
+		{
 			Console.ForegroundColor = ConsoleColor.Magenta;
 			Console.WriteLine("Confirm merge to production database by typing the database name:");
 			var result = Console.ReadLine();
@@ -126,7 +126,7 @@ internal class Program
 		using var cn = new SqlConnection(target.ConnectionString);
 		cn.Open();
 		using var txn = cn.BeginTransaction();
-		
+
 		try
 		{
 			foreach (var sql in statements)
@@ -157,7 +157,7 @@ internal class Program
 			using var cn = new SqlConnection(connectionString);
 			cn.Open();
 		}
-		catch 
+		catch
 		{
 			if (TryCreateDbIfNotExists(connectionString)) return;
 			throw;

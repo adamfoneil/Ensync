@@ -1,5 +1,4 @@
-﻿using Ensync.Core;
-using Ensync.Core.Abstract;
+﻿using Ensync.Core.Abstract;
 using Ensync.Core.DbObjects;
 using Ensync.Dotnet7.Extensions;
 using Microsoft.Extensions.DependencyModel;
@@ -20,10 +19,10 @@ public class AssemblySchemaInspector : SchemaInspector
 	/// </summary>
 	private static DependencyContext? _dependencyContext;
 
-	public AssemblySchemaInspector(string fileName) 
+	public AssemblySchemaInspector(string fileName)
 	{
 		var depsFile = Path.Combine(
-			Path.GetDirectoryName(fileName) ?? throw new Exception($"Couldn't get directory name from {fileName}"), 
+			Path.GetDirectoryName(fileName) ?? throw new Exception($"Couldn't get directory name from {fileName}"),
 			Path.GetFileNameWithoutExtension(fileName) + ".deps.json");
 
 		if (!File.Exists(depsFile)) throw new FileNotFoundException($"Couldn't find dependency info file {depsFile}");
@@ -105,7 +104,7 @@ public class AssemblySchemaInspector : SchemaInspector
 
 		AddTables(types, tables, errors);
 		AddForeignKeys(tables, foreignKeys, errors);
-	
+
 		Errors = errors;
 		return (tables.Select(tuple => tuple.Table), foreignKeys);
 	}
@@ -114,7 +113,7 @@ public class AssemblySchemaInspector : SchemaInspector
 	{
 		var tableDictionary = tables.ToDictionary(tuple => tuple.Type.Name);
 
-		var results = tables.SelectMany(tuple => 
+		var results = tables.SelectMany(tuple =>
 			MappedProperties(tuple.Type)
 			.Where(pi => pi.HasAttribute<ForeignKeyAttribute>(out _)), (tuple, pi) =>
 			{
@@ -169,7 +168,7 @@ public class AssemblySchemaInspector : SchemaInspector
 	{
 		string name = (type.HasAttribute(out TableAttribute tableAttr)) ? tableAttr.Name : type.Name;
 
-		string schema =			
+		string schema =
 			(tableAttr != null && !string.IsNullOrEmpty(tableAttr.Schema)) ? tableAttr.Schema :
 			defaultSchema;
 
@@ -226,7 +225,7 @@ public class AssemblySchemaInspector : SchemaInspector
 	private IEnumerable<Index> BuildIndexes(string constraintName, IEnumerable<PropertyInfo> mappedProperties, PropertyInfo? identityProperty)
 	{
 		IndexType alternateKeyType = IndexType.PrimaryKey;
-		
+
 		if (identityProperty is not null)
 		{
 			yield return new Index()
@@ -258,12 +257,12 @@ public class AssemblySchemaInspector : SchemaInspector
 			{
 				Name = $"IX_{constraintName}_{col.Name}",
 				IndexType = IndexType.NonUnique,
-				Columns = new[] { new Index.Column() { Name  = col.Name, Order = 1 } }
+				Columns = new[] { new Index.Column() { Name = col.Name, Order = 1 } }
 			};
 		}
 	}
 
-	private IEnumerable<CheckConstraint> BuildCheckConstraints(Type type, string constraintName) => Enumerable.Empty<CheckConstraint>();	
+	private IEnumerable<CheckConstraint> BuildCheckConstraints(Type type, string constraintName) => Enumerable.Empty<CheckConstraint>();
 
 	private static Dictionary<Type, string> SupportedTypes
 	{
@@ -306,6 +305,6 @@ public class AssemblySchemaInspector : SchemaInspector
 			result.Add(typeof(byte[]), "varbinary");
 
 			return result;
-		}		
+		}
 	}
 }
