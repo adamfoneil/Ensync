@@ -1,6 +1,11 @@
-﻿using Ensync.Core.Abstract;
+﻿using Ensync.Core;
+using Ensync.Core.Abstract;
+using Ensync.Core.DbObjects;
 using Microsoft.Extensions.DependencyModel;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
+using Index = Ensync.Core.DbObjects.Index;
 
 namespace Ensync.Dotnet7;
 
@@ -85,10 +90,106 @@ public class AssemblySchemaInspector : SchemaInspector
 
 	public virtual Func<Type, bool> TypeFilter { get; set; }
 
+	public IEnumerable<(Type, string Message)> Errors { get; private set; } = Enumerable.Empty<(Type, string)>();
+
 	protected override async Task<IEnumerable<DbObject>> GetDbObjectsAsync()
 	{
+		await Task.CompletedTask;
+
 		var types = _assembly.GetExportedTypes().Where(TypeFilter);
 
+		List<DbObject> dbObjects = new();
+		List<(Type, string)> errors = new();
+		var typeDictionary = types.ToDictionary(t => t.Name);
+
+		foreach (var type in types)
+		{
+			try
+			{
+				dbObjects.Add(BuildTable(type, typeDictionary));
+			}
+			catch (Exception exc)
+			{
+				errors.Add((type, exc.Message));
+			}
+		}
+
+		Errors = errors;
+		return dbObjects;
+	}
+
+	private Table BuildTable(Type type, Dictionary<string, Type> typeDictionary) => new Table()
+	{
+		Name = GetTableName(type, "dbo"),
+		Columns = BuildColumns(type),
+		Indexes = BuildIndexes(type),
+		CheckConstraints = BuildCheckConstraints(type),
+		ForeignKeys = BuildForeignKeys(type, typeDictionary)
+	};
+
+	private IEnumerable<ForeignKey> BuildForeignKeys(Type type, Dictionary<string, Type> typeDictionary)
+	{
 		throw new NotImplementedException();
+	}
+
+	private IEnumerable<CheckConstraint> BuildCheckConstraints(Type type)
+	{
+		throw new NotImplementedException();
+	}
+
+	private IEnumerable<Index> BuildIndexes(Type type)
+	{
+		throw new NotImplementedException();
+	}
+
+	private IEnumerable<Column> BuildColumns(Type type)
+	{
+		throw new NotImplementedException();
+	}
+
+	private string GetTableName(Type type, string defaultSchema)
+	{
+		throw new NotImplementedException();
+	}
+
+	private static Dictionary<Type, string> GetSupportedTypes()
+	{
+		var nullableBaseTypes = new Dictionary<Type, string>()
+			{
+				{ typeof(int), "int" },
+				{ typeof(long), "bigint" },
+				{ typeof(short), "smallint" },
+				{ typeof(byte), "tinyint" },
+				{ typeof(DateTime), "datetime" },
+				{ typeof(decimal), "decimal" },
+				{ typeof(bool), "bit" },
+				{ typeof(TimeSpan), "time" },
+				{ typeof(Guid), "uniqueidentifier" }
+			};
+
+		// help from https://stackoverflow.com/a/23402195/2023653
+		IEnumerable<Type> getBothTypes(Type type)
+		{
+			yield return type;
+			yield return typeof(Nullable<>).MakeGenericType(type);
+		}
+
+		var results = nullableBaseTypes.Select(kp => new
+		{
+			Types = getBothTypes(kp.Key),
+			SqlType = kp.Value
+		}).SelectMany(item => item.Types.Select(t => new
+		{
+			Type = t,
+			item.SqlType
+		}));
+
+		var result = results.ToDictionary(item => item.Type, item => item.SqlType);
+
+		// string is special in that it's already nullable
+		result.Add(typeof(string), "nvarchar");
+		result.Add(typeof(byte[]), "varbinary");
+
+		return result;
 	}
 }
