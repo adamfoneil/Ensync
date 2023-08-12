@@ -9,4 +9,5 @@ public class EmployeeType : IEntity<int>
 	[Key]
 	[MaxLength(50)]
 	public required string Name { get; set; }
+	public bool IsActive { get; set; } = true;
 }

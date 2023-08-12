@@ -16,38 +16,26 @@ internal class Program
 		await Parser.Default.ParseArguments<Options>(args).WithParsedAsync(async o =>
 		{
 			var config = FindConfig(o.ConfigPath);
-			var assemblyFile = PathHelper.Resolve(config.BasePath, config.Data.AssemblyPath);
-			Console.WriteLine(assemblyFile);
-
-			var assemblyInspector = new AssemblySchemaInspector(assemblyFile);
-			var assemblySchema = await assemblyInspector.GetSchemaAsync();
-
 			var targets = config.Data.DatabaseTargets.ToDictionary(item => item.Name);
-			var targetName = o.DbTarget ?? config.Data.DatabaseTargets[0].Name;
-			var target = targets[targetName];
 
-			EnsureValidDbTarget(target.ConnectionString);
+			var source = await GetSourceSchemaAsync(o, config.BasePath, config.Data, targets);					
+			var target = await GetDbSchemaAsync(o, config.Data, targets);
+			Console.WriteLine($"Merging from {source.Description} to {target.Description}");
+			Console.WriteLine();
 
-			var dbInspector = new SqlServerSchemaInspector(target.ConnectionString);
-			var dbSchema = await dbInspector.GetSchemaAsync();
-
-			var scriptBuilder = new SqlServerScriptBuilder(target.ConnectionString);
-			var script = await assemblySchema.CompareAsync(dbSchema, scriptBuilder);
+			var scriptBuilder = new SqlServerScriptBuilder(target.Target.ConnectionString);
+			var script = await source.Schema.CompareAsync(target.Schema, scriptBuilder);
 
 			var statements = script.ToSqlStatements(scriptBuilder, true).ToArray();
 
 			switch (o.Action)
 			{
-				case Action.ScriptOnly:
-					foreach (var cmd in statements)
-					{
-						Console.WriteLine(cmd);
-						Console.WriteLine();
-					}
+				case Action.Preview:
+					PreviewChanges(statements);					
 					break;
 
 				case Action.Merge:
-					MergeChanges(target.ConnectionString, statements);
+					MergeChanges(target.Target, statements);
 					break;
 
 				case Action.LaunchSqlFile:
@@ -60,13 +48,85 @@ internal class Program
 		});
 	}
 
-	private static void MergeChanges(string connectionString, string[] statements)
+	private static async Task<(Configuration.Target Target, string Description, Schema Schema)> GetDbSchemaAsync(Options options, Configuration config, Dictionary<string, Configuration.Target> targets)
 	{
-		using var cn = new SqlConnection(connectionString);
-		cn.Open();
-		using var txn = cn.BeginTransaction();
+		var targetName = options.DbTarget ?? config.DatabaseTargets[0].Name;
+		var target = targets[targetName];
+
+		EnsureValidDbTarget(target.ConnectionString);
+
+		var dbInspector = new SqlServerSchemaInspector(target.ConnectionString);
+		var description = $"database {ConnectionString.Server(target.ConnectionString)}.{ConnectionString.Database(target.ConnectionString)}";
+		return (target, description, await dbInspector.GetSchemaAsync());
+	}
+
+	private static async Task<(string Description, Schema Schema)> GetSourceSchemaAsync(Options options, string basePath, Configuration config, Dictionary<string, Configuration.Target> targets)
+	{
+		if (options.UseAssemblySource)
+		{
+			var assemblyFile = PathHelper.Resolve(basePath, config.AssemblyPath);
+			var assemblyInspector = new AssemblySchemaInspector(assemblyFile);
+			return ($"assembly {Path.GetFileName(assemblyFile)}", await assemblyInspector.GetSchemaAsync());
+		}
+
+		var dbSchema = await GetDbSchemaAsync(options, config, targets);
+		return (dbSchema.Description, dbSchema.Schema);
+	}
+
+	private static void PreviewChanges(string[] statements)
+	{
+		var color = Console.ForegroundColor;
+		try
+		{
+			if (statements.Any())
+			{
+				Console.ForegroundColor = ConsoleColor.Yellow;
+				Console.WriteLine("Previewing changes:");
+				foreach (var cmd in statements)
+				{
+					Console.WriteLine(cmd);
+					Console.WriteLine();
+				}
+			}
+			else
+			{
+				Console.WriteLine("No changes found");
+			}
+		}
+		finally
+		{
+			Console.ForegroundColor = color;
+		}
+		
+	}
+
+	private static void MergeChanges(Configuration.Target target, string[] statements)
+	{
+		if (!statements.Any())
+		{
+			Console.WriteLine("No changes to merge");
+			return;
+		}
 
 		var color = Console.ForegroundColor;
+
+		if (target.IsProduction)
+		{		
+			Console.ForegroundColor = ConsoleColor.Magenta;
+			Console.WriteLine("Confirm merge to production database by typing the database name:");
+			var result = Console.ReadLine();
+			if (!result?.Equals(ConnectionString.Database(target.ConnectionString)) ?? true)
+			{
+				Console.WriteLine("Operation halted");
+				Console.ForegroundColor = color;
+				return;
+			}
+		}
+
+		using var cn = new SqlConnection(target.ConnectionString);
+		cn.Open();
+		using var txn = cn.BeginTransaction();
+		
 		try
 		{
 			foreach (var sql in statements)
