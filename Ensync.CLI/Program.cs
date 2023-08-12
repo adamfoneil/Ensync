@@ -1,10 +1,8 @@
 ﻿using AO.ConnectionStrings;
-using Ensync.Core;
 using Ensync.Core.Extensions;
 using Ensync.Dotnet7;
 using Ensync.SqlServer;
 using Microsoft.Data.SqlClient;
-using System.Text.Json;
 
 namespace Ensync.CLI;
 
