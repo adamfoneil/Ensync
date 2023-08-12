@@ -4,16 +4,36 @@ using System.Text.Json;
 
 namespace Ensync.CLI;
 
+public enum Action
+{
+	/// <summary>
+	/// show sql statements in console only
+	/// </summary>
+	Script,
+	/// <summary>
+	/// execute SQL statements
+	/// </summary>
+	Merge,
+	/// <summary>
+	/// view .sql file for manual inspection and running
+	/// </summary>
+	LaunchSqlFile,
+	/// <summary>
+	/// add a script action to the ignore list
+	/// </summary>
+	Ignore
+}
+
 internal class CommandContext : CommandContextBase
 {
-    public CommandContext(string[] args) : base(args)
-    {
-    }
+	public CommandContext(string[] args) : base(args)
+	{
+	}
 
-    public string ConfigPath { get; private set; } = default!;
-    public string DbTarget { get; private set; } = default!;
-    public string Action { get; private set; } = default!;
-    public Configuration Configuration { get; private set; } = default!;
+	public string ConfigPath { get; private set; } = default!;
+	public string DbTarget { get; private set; } = default!;
+	public Action Action { get; private set; } = default!;
+	public Configuration Configuration { get; private set; } = default!;
 	public string BasePath { get; private set; } = default!;
 	public Dictionary<string, Configuration.Target> Targets { get; private set; } = new();
 
@@ -25,7 +45,7 @@ internal class CommandContext : CommandContextBase
 		BasePath = config.BasePath;
 		Targets = Configuration.DatabaseTargets.ToDictionary(item => item.Name);
 		DbTarget = ParseArgument(1, Targets.FirstOrDefault().Key ?? throw new Exception("Expected at least one database target"));
-		Action = ParseArgument(2, "script");
+		Action = Enum.Parse<Action>(ParseArgument(2, "script"), true);
 	}
 
 	private static (Configuration Data, string BasePath) FindConfig(string configPath)

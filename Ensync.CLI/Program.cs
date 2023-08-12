@@ -30,6 +30,56 @@ internal class Program
 		var script = await assemblySchema.CompareAsync(dbSchema, scriptBuilder);
 
 		var statements = script.ToSqlStatements(scriptBuilder, true).ToArray();
+
+		switch (context.Action)
+		{
+			case Action.Script:
+				foreach (var cmd in statements)
+				{
+					Console.WriteLine(cmd);
+					Console.WriteLine();
+				}
+				break;
+
+			case Action.Merge:
+				MergeChanges(target.ConnectionString, statements);
+				break;
+
+			case Action.LaunchSqlFile:
+				break;
+
+			case Action.Ignore:
+				break;
+		}
+	}
+
+	private static void MergeChanges(string connectionString, string[] statements)
+	{
+		using var cn = new SqlConnection(connectionString);
+		using var txn = cn.BeginTransaction();
+
+		var color = Console.ForegroundColor;
+		try
+		{
+			foreach (var sql in statements)
+			{
+				using var cmd = new SqlCommand(sql, cn);
+				cmd.ExecuteNonQuery();
+			}
+			txn.Commit();
+			Console.ForegroundColor = ConsoleColor.Green;
+			Console.WriteLine("Changes merged successfully");
+		}
+		catch (Exception exc)
+		{
+			txn.Rollback();
+			Console.ForegroundColor = ConsoleColor.Red;
+			Console.WriteLine(exc.ToString());
+		}
+		finally
+		{
+			Console.ForegroundColor = color;
+		}
 	}
 
 	private static void EnsureValidDbTarget(string connectionString)
