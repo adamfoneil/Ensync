@@ -6,23 +6,27 @@ namespace Ensync.Dotnet7;
 
 public class AssemblySchemaInspector : SchemaInspector
 {
-    private readonly Assembly _assembly;
+	private readonly Assembly _assembly;
 
-    private static DependencyContext? _dependencyContext;
+	/// <summary>
+	/// everything related to DependencyContext had a lot of ChatGPT help
+	/// https://chat.openai.com/share/f80a4013-044b-469b-aafc-151a74b44bac
+	/// </summary>
+	private static DependencyContext? _dependencyContext;
 
-    public AssemblySchemaInspector(string fileName) 
-    {
-        var depsFile = Path.Combine(
-            Path.GetDirectoryName(fileName) ?? throw new Exception($"Couldn't get directory name from {fileName}"), 
-            Path.GetFileNameWithoutExtension(fileName) + ".deps.json");
+	public AssemblySchemaInspector(string fileName) 
+	{
+		var depsFile = Path.Combine(
+			Path.GetDirectoryName(fileName) ?? throw new Exception($"Couldn't get directory name from {fileName}"), 
+			Path.GetFileNameWithoutExtension(fileName) + ".deps.json");
 
-        if (!File.Exists(depsFile)) throw new FileNotFoundException($"Couldn't find dependency info file {depsFile}");
+		if (!File.Exists(depsFile)) throw new FileNotFoundException($"Couldn't find dependency info file {depsFile}");
 
-        _dependencyContext ??= LoadDependencyContext(depsFile) ?? throw new Exception("Couldn't load dependency context");
+		_dependencyContext ??= LoadDependencyContext(depsFile) ?? throw new Exception("Couldn't load dependency context");
 
 		AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
 
-        _assembly = Assembly.LoadFile(fileName);
+		_assembly = Assembly.LoadFile(fileName);
 		TypeFilter = (type) => true;
 	}
 
@@ -35,13 +39,13 @@ public class AssemblySchemaInspector : SchemaInspector
 		if (library != null)
 		{
 			var local = GetLocalDll(library.Name);
-			if (local.Result)
+			if (local.Success)
 			{
 				return Assembly.LoadFile(local.Path);
 			}
 
 			var package = GetNugetPackageDll(library);
-			if (package.Result)
+			if (package.Success)
 			{
 				return Assembly.LoadFile(package.Path);
 			}
@@ -50,7 +54,7 @@ public class AssemblySchemaInspector : SchemaInspector
 		return null;
 	}
 
-	private (bool Result, string Path) GetNugetPackageDll(RuntimeLibrary library)
+	private (bool Success, string Path) GetNugetPackageDll(RuntimeLibrary library)
 	{
 		var packagePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
 		   ".nuget", "packages", library.Name.ToLower(), library.Version);
@@ -60,7 +64,7 @@ public class AssemblySchemaInspector : SchemaInspector
 		return (File.Exists(assemblyPath), assemblyPath);
 	}
 
-	private (bool Result, string Path) GetLocalDll(string name)
+	private (bool Success, string Path) GetLocalDll(string name)
 	{
 		var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{name}.dll");
 		return (File.Exists(path), path);
@@ -74,17 +78,17 @@ public class AssemblySchemaInspector : SchemaInspector
 	}
 
 	public AssemblySchemaInspector(Assembly assembly)
-    {
-        _assembly = assembly;
-        TypeFilter = (type) => true;
-    }
+	{
+		_assembly = assembly;
+		TypeFilter = (type) => true;
+	}
 
-    public virtual Func<Type, bool> TypeFilter { get; set; }
+	public virtual Func<Type, bool> TypeFilter { get; set; }
 
-    protected override async Task<IEnumerable<DbObject>> GetDbObjectsAsync()
-    {
-        var types = _assembly.GetExportedTypes().Where(TypeFilter);
+	protected override async Task<IEnumerable<DbObject>> GetDbObjectsAsync()
+	{
+		var types = _assembly.GetExportedTypes().Where(TypeFilter);
 
-        throw new NotImplementedException();
-    }
+		throw new NotImplementedException();
+	}
 }
