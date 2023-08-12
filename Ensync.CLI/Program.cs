@@ -1,8 +1,11 @@
 ﻿using AO.ConnectionStrings;
+using CommandLine;
+using Ensync.Core;
 using Ensync.Core.Extensions;
 using Ensync.Dotnet7;
 using Ensync.SqlServer;
 using Microsoft.Data.SqlClient;
+using System.Text.Json;
 
 namespace Ensync.CLI;
 
@@ -10,52 +13,57 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		var context = new CommandContext(args);
-		
-		var fullPath = PathHelper.Resolve(context.BasePath, context.Configuration.AssemblyPath);
-		Console.WriteLine(fullPath);
-		
-		var assemblyInspector = new AssemblySchemaInspector(fullPath);
-		var assemblySchema = await assemblyInspector.GetSchemaAsync();
-
-		var targetName = context.DbTarget;
-		var target = context.Targets[targetName];
-
-		EnsureValidDbTarget(target.ConnectionString);
-
-		var dbInspector = new SqlServerSchemaInspector(target.ConnectionString);
-		var dbSchema = await dbInspector.GetSchemaAsync();
-
-		var scriptBuilder = new SqlServerScriptBuilder(target.ConnectionString);
-		var script = await assemblySchema.CompareAsync(dbSchema, scriptBuilder);
-
-		var statements = script.ToSqlStatements(scriptBuilder, true).ToArray();
-
-		switch (context.Action)
+		await Parser.Default.ParseArguments<Options>(args).WithParsedAsync(async o =>
 		{
-			case Action.Script:
-				foreach (var cmd in statements)
-				{
-					Console.WriteLine(cmd);
-					Console.WriteLine();
-				}
-				break;
+			var config = FindConfig(o.ConfigPath);
+			var assemblyFile = PathHelper.Resolve(config.BasePath, config.Data.AssemblyPath);
+			Console.WriteLine(assemblyFile);
 
-			case Action.Merge:
-				MergeChanges(target.ConnectionString, statements);
-				break;
+			var assemblyInspector = new AssemblySchemaInspector(assemblyFile);
+			var assemblySchema = await assemblyInspector.GetSchemaAsync();
 
-			case Action.LaunchSqlFile:
-				break;
+			var targets = config.Data.DatabaseTargets.ToDictionary(item => item.Name);
+			var targetName = o.DbTarget ?? config.Data.DatabaseTargets[0].Name;
+			var target = targets[targetName];
 
-			case Action.Ignore:
-				break;
-		}
+			EnsureValidDbTarget(target.ConnectionString);
+
+			var dbInspector = new SqlServerSchemaInspector(target.ConnectionString);
+			var dbSchema = await dbInspector.GetSchemaAsync();
+
+			var scriptBuilder = new SqlServerScriptBuilder(target.ConnectionString);
+			var script = await assemblySchema.CompareAsync(dbSchema, scriptBuilder);
+
+			var statements = script.ToSqlStatements(scriptBuilder, true).ToArray();
+
+			switch (o.Action)
+			{
+				case Action.ScriptOnly:
+					foreach (var cmd in statements)
+					{
+						Console.WriteLine(cmd);
+						Console.WriteLine();
+					}
+					break;
+
+				case Action.Merge:
+					MergeChanges(target.ConnectionString, statements);
+					break;
+
+				case Action.LaunchSqlFile:
+					break;
+
+				case Action.Ignore:
+					break;
+			}
+
+		});
 	}
 
 	private static void MergeChanges(string connectionString, string[] statements)
 	{
 		using var cn = new SqlConnection(connectionString);
+		cn.Open();
 		using var txn = cn.BeginTransaction();
 
 		var color = Console.ForegroundColor;
@@ -63,7 +71,7 @@ internal class Program
 		{
 			foreach (var sql in statements)
 			{
-				using var cmd = new SqlCommand(sql, cn);
+				using var cmd = new SqlCommand(sql, cn, txn);
 				cmd.ExecuteNonQuery();
 			}
 			txn.Commit();
@@ -126,5 +134,27 @@ internal class Program
 			parts[dbToken] = databaseName;
 			return string.Join(";", parts.Select(kp => $"{kp.Key}={kp.Value}"));
 		}
-	}	
+	}
+
+	private static (Configuration Data, string BasePath) FindConfig(string configPath)
+	{
+		var startPath = configPath;
+
+		var path = Path.GetFullPath(startPath);
+
+		const string ensyncConfig = "ensync.config.json";
+
+		var configFile = Path.Combine(path, ensyncConfig);
+		do
+		{
+			if (File.Exists(configFile))
+			{
+				var json = File.ReadAllText(configFile);
+				return (JsonSerializer.Deserialize<Configuration>(json) ?? throw new Exception("Couldn't read json"), path);
+			}
+
+			path = Directory.GetParent(path)?.FullName ?? throw new Exception($"Couldn't get directory parent of {path}");
+			configFile = Path.Combine(path, ensyncConfig);
+		} while (true);
+	}
 }

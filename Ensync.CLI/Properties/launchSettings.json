@@ -2,7 +2,7 @@
   "profiles": {
     "Ensync.CLI": {
       "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\adamo\\source\\repos\\Ensync\\SampleDb\" --merge"
+      "commandLineArgs": "--c \"C:\\Users\\adamo\\source\\repos\\Ensync\\SampleDb\" --a Merge"
     }
   }
 }
