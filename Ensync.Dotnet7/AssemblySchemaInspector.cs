@@ -16,7 +16,7 @@ public class AssemblySchemaInspector : SchemaInspector
             Path.GetDirectoryName(fileName) ?? throw new Exception($"Couldn't get directory name from {fileName}"), 
             Path.GetFileNameWithoutExtension(fileName) + ".deps.json");
 
-        if (!File.Exists(depsFile)) throw new FileNotFoundException($"Couldn't find file {depsFile}");
+        if (!File.Exists(depsFile)) throw new FileNotFoundException($"Couldn't find dependency info file {depsFile}");
 
         _dependencyContext ??= LoadDependencyContext(depsFile) ?? throw new Exception("Couldn't load dependency context");
 
@@ -34,18 +34,36 @@ public class AssemblySchemaInspector : SchemaInspector
 
 		if (library != null)
 		{
-			// Construct the path to the assembly, this is just a basic example
-			// and assumes the DLL is in the same folder as the application.
-			// You may need to adjust this logic to fit your application's structure.
-			var assemblyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{library.Name}.dll");
-
-			if (File.Exists(assemblyPath))
+			var local = GetLocalDll(library.Name);
+			if (local.Result)
 			{
-				return Assembly.LoadFile(assemblyPath);
+				return Assembly.LoadFile(local.Path);
+			}
+
+			var package = GetNugetPackageDll(library);
+			if (package.Result)
+			{
+				return Assembly.LoadFile(package.Path);
 			}
 		}
 
 		return null;
+	}
+
+	private (bool Result, string Path) GetNugetPackageDll(RuntimeLibrary library)
+	{
+		var packagePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+		   ".nuget", "packages", library.Name.ToLower(), library.Version);
+
+		var assemblyPath = Path.Combine(packagePath, library.RuntimeAssemblyGroups.First().RuntimeFiles.First().Path);
+
+		return (File.Exists(assemblyPath), assemblyPath);
+	}
+
+	private (bool Result, string Path) GetLocalDll(string name)
+	{
+		var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{name}.dll");
+		return (File.Exists(path), path);
 	}
 
 	private static DependencyContext LoadDependencyContext(string depsJsonPath)
