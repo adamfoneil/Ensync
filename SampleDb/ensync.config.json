@@ -4,7 +4,7 @@
         {
             "Name" : "local",
             "Type" : "SqlServer",
-            "ConnectionString" : "(localdb)\\mssqllocaldb;Database=EnsyncSample;Integrated Security=true"
+            "ConnectionString" : "Server=(localdb)\\mssqllocaldb;Database=EnsyncSample;Integrated Security=true"
         }
     ]
 }

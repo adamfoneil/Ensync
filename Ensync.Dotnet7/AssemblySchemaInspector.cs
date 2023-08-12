@@ -99,38 +99,70 @@ public class AssemblySchemaInspector : SchemaInspector
 
 		var types = _assembly.GetExportedTypes().Where(TypeFilter);
 
-		List<Table> tables = new();
+		List<(Type Type, Table Table, string ConstraintName)> tables = new();
+		List<ForeignKey> foreignKeys = new();
 		List<(Type, string)> errors = new();
-		var typeDictionary = types.ToDictionary(t => t.Name);
 
+		AddTables(types, tables, errors);
+		AddForeignKeys(tables, foreignKeys, errors);
+	
+		Errors = errors;
+		return (tables.Select(tuple => tuple.Table), foreignKeys);
+	}
+
+	private void AddForeignKeys(List<(Type Type, Table Table, string ConstraintName)> tables, List<ForeignKey> foreignKeys, List<(Type, string)> errors)
+	{
+		var tableDictionary = tables.ToDictionary(tuple => tuple.Type.Name);
+
+		var results = tables.SelectMany(tuple => 
+			MappedProperties(tuple.Type)
+			.Where(pi => pi.HasAttribute<ForeignKeyAttribute>(out _)), (tuple, pi) =>
+			{
+				var referencedTable = tableDictionary[pi.GetCustomAttribute<ForeignKeyAttribute>()!.Name].Table;
+				return new ForeignKey()
+				{
+					Name = $"FK_{tuple.ConstraintName}_{pi.Name}",
+					Parent = tuple.Table,
+					ReferencedTable = referencedTable,
+					Columns = new[] { new ForeignKey.Column() { ReferencingName = pi.Name, ReferencedName = referencedTable.IdentityColumn } },
+					//CascadeDelete = todo
+					// CascadeUpdate = todo
+				};
+			});
+
+		foreignKeys.AddRange(results);
+	}
+
+	private void AddTables(IEnumerable<Type> types, List<(Type Type, Table Table, string ConstraintName)> tables, List<(Type, string)> errors)
+	{
 		foreach (var type in types)
 		{
 			try
 			{
-				tables.Add(BuildTable(type, typeDictionary));
+				var table = BuildTable(type);
+				tables.Add((type, table.Table, table.ConstraintName));
 			}
 			catch (Exception exc)
 			{
 				errors.Add((type, exc.Message));
 			}
 		}
-
-		Errors = errors;
-		return (tables, Enumerable.Empty<ForeignKey>());
 	}
 
-	private Table BuildTable(Type type, Dictionary<string, Type> typeDictionary)
+	private (Table Table, string ConstraintName) BuildTable(Type type)
 	{
 		var nameParts = GetTableNameParts(type, "dbo");
 		var mappedProperties = MappedProperties(type);
+		var identityProperty = mappedProperties.SingleOrDefault(pi => pi.Name.Equals("Id")) ?? throw new Exception($"Entity type {type.Name} missing expected Id property");
 
-		return new Table()
+		return (new Table()
 		{
 			Name = $"{nameParts.Schema}.{nameParts.Name}",
+			IdentityColumn = identityProperty.Name,
 			Columns = BuildColumns(mappedProperties),
-			Indexes = BuildIndexes(nameParts.BaseConstraintName, mappedProperties),
+			Indexes = BuildIndexes(nameParts.BaseConstraintName, mappedProperties, identityProperty),
 			CheckConstraints = BuildCheckConstraints(type, nameParts.BaseConstraintName)			
-		};
+		}, nameParts.BaseConstraintName);
 	}
 
 	private (string Schema, string Name, string BaseConstraintName) GetTableNameParts(Type type, string defaultSchema)
@@ -191,11 +223,10 @@ public class AssemblySchemaInspector : SchemaInspector
 		}
 	}
 
-	private IEnumerable<Index> BuildIndexes(string constraintName, IEnumerable<PropertyInfo> mappedProperties)
+	private IEnumerable<Index> BuildIndexes(string constraintName, IEnumerable<PropertyInfo> mappedProperties, PropertyInfo? identityProperty)
 	{
 		IndexType alternateKeyType = IndexType.PrimaryKey;
-
-		var identityProperty = mappedProperties.SingleOrDefault(pi => pi.Name.Equals("Id"));
+		
 		if (identityProperty is not null)
 		{
 			yield return new Index()
@@ -232,25 +263,7 @@ public class AssemblySchemaInspector : SchemaInspector
 		}
 	}
 
-	/*
-	private IEnumerable<ForeignKey> BuildForeignKeys(IEnumerable<PropertyInfo> mappedProperties, Dictionary<string, Type> typeDictionary, string constraintName) =>
-		mappedProperties
-			.Where(pi => pi.HasAttribute<ForeignKeyAttribute>(out var fkAttr) && typeDictionary.ContainsKey(fkAttr.Name))
-			.Select(pi => new
-			{
-				Property = pi,
-				ReferencedTableName = pi.GetCustomAttribute<ForeignKeyAttribute>()!.Name
-			}).Select(item => new ForeignKey()
-			{
-				Name = $"FK_{constraintName}_{item.Property.Name}",
-				//ReferencedTable = typeDictionary[item.ReferencedTableName]
-				//Columns = new[] { new ForeignKey.Column() { ReferencingName = item.Property} }
-			});*/
-
-	private IEnumerable<CheckConstraint> BuildCheckConstraints(Type type, string constraintName)
-	{
-		throw new NotImplementedException();
-	}
+	private IEnumerable<CheckConstraint> BuildCheckConstraints(Type type, string constraintName) => Enumerable.Empty<CheckConstraint>();	
 
 	private static Dictionary<Type, string> SupportedTypes
 	{
