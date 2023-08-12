@@ -159,9 +159,9 @@ public class AssemblySchemaInspector : SchemaInspector
 		{
 			Name = $"{nameParts.Schema}.{nameParts.Name}",
 			IdentityColumn = identityProperty.Name,
-			Columns = BuildColumns(mappedProperties),
-			Indexes = BuildIndexes(nameParts.BaseConstraintName, mappedProperties, identityProperty),
-			CheckConstraints = BuildCheckConstraints(type, nameParts.BaseConstraintName)			
+			Columns = BuildColumns(mappedProperties).ToArray(),
+			Indexes = BuildIndexes(nameParts.BaseConstraintName, mappedProperties, identityProperty).ToArray(),
+			CheckConstraints = BuildCheckConstraints(type, nameParts.BaseConstraintName).ToArray()
 		}, nameParts.BaseConstraintName);
 	}
 

@@ -31,6 +31,8 @@ internal class Program
 
 		var scriptBuilder = new SqlServerScriptBuilder(target.ConnectionString);
 		var script = await assemblySchema.CompareAsync(dbSchema, scriptBuilder);
+
+		var statements = script.ToSqlStatements(scriptBuilder, true).ToArray();
 	}
 
 	private static void EnsureValidDbTarget(string connectionString)
