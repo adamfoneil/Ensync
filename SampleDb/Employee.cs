@@ -11,6 +11,8 @@ public class Employee : IEntity<int>
 	public required string FirstName { get; set; }
 	[MaxLength(50)]
 	public required string LastName { get; set; }
+	[MaxLength(30)]
+	public string? PhoneNumber { get; set; }
 	[ForeignKey(nameof(EmployeeType))]
 	public int TypeId { get; set; }
 	public DateTime HireDate { get; set; }
