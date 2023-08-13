@@ -15,7 +15,7 @@ public enum Action
 	/// <summary>
 	/// view .sql file for manual inspection and running
 	/// </summary>
-	LaunchSqlFile,
+	Script,
 	/// <summary>
 	/// add a script action to the ignore list
 	/// </summary>
@@ -24,6 +24,9 @@ public enum Action
 
 internal class Options
 {
+	[Option('i', "init", HelpText = "Creates a blank config file in the current directory")]
+	public bool Init { get; set; }
+
 	[Option('c', "config", Required = false, Default = ".", HelpText = "Path to config file. Omit to use current directory")]
 	public string ConfigPath { get; set; } = default!;
 
@@ -36,8 +39,11 @@ internal class Options
 	[Option('a', "action", Required = false, Default = "Preview", HelpText = "Action to perform")]
 	public string ActionName { get; set; } = default!;
 
-	[Option('m', "merge", HelpText = "Same as setting action = Merge")]
+	[Option('m', "merge", HelpText = "Executes the merge script. Same as setting action = Merge")]
 	public bool Merge { get; set; }
+
+	[Option('r', "script", HelpText = "Builds a .sql script file and launches it. Same as setting action = Script")]
+	public bool Script { get; set; }
 
 	public Action Action => Enum.Parse<Action>(ActionName);
 	public bool UseAssemblySource => string.IsNullOrWhiteSpace(Source);

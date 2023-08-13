@@ -1,23 +1,37 @@
 ﻿using AO.ConnectionStrings;
 using CommandLine;
 using Ensync.Core;
+using Ensync.Core.DbObjects;
 using Ensync.Core.Extensions;
+using Ensync.Core.Models;
 using Ensync.Dotnet7;
 using Ensync.SqlServer;
 using Microsoft.Data.SqlClient;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace Ensync.CLI;
 
 internal class Program
 {
+	const string ConfigFilename = "ensync.config.json";
+	const string IgnoreFilename = "ensync.ignore.json";
+
 	static async Task Main(string[] args)
-	{
+	{		
 		await Parser.Default.ParseArguments<Options>(args).WithParsedAsync(async o =>
 		{
+			var config = FindConfig(o.ConfigPath);
+
+			if (o.Init)
+			{
+				CreateEmptyConfig(config.BasePath);
+				return;
+			}
+
 			if (o.Merge) o.ActionName = "Merge";
 
-			var config = FindConfig(o.ConfigPath);
+			
 			var targets = config.Data.DatabaseTargets.ToDictionary(item => item.Name);
 
 			var source = await GetSourceSchemaAsync(o, config.BasePath, config.Data, targets);
@@ -31,7 +45,7 @@ internal class Program
 			var statements = script.ToSqlStatements(scriptBuilder, true).ToArray();
 
 			switch (o.Action)
-			{
+			{				
 				case Action.Preview:
 					PreviewChanges(statements);
 					break;
@@ -40,7 +54,8 @@ internal class Program
 					MergeChanges(target.Target, statements);
 					break;
 
-				case Action.LaunchSqlFile:
+				case Action.Script:
+					CreateSqlScript(config.BasePath, statements);
 					break;
 
 				case Action.Ignore:
@@ -48,6 +63,100 @@ internal class Program
 			}
 
 		});
+	}
+
+	private static void CreateSqlScript(string basePath, string[] statements)
+	{
+		throw new NotImplementedException();
+	}
+
+	private static Configuration DefaultConfiguration(string basePath) => new Configuration()
+	{
+		AssemblyPath = FindAssemblyPath(basePath),
+		DatabaseTargets = new[] { FindDefaultDatabaseTarget(basePath) }
+	};
+
+	private static void CreateEmptyConfig(string basePath)
+	{
+		var outputFile = Path.Combine(basePath, ConfigFilename);
+		
+		if (!File.Exists(outputFile))
+		{
+			var config = DefaultConfiguration(basePath);
+
+			var json = JsonSerializer.Serialize(config, new JsonSerializerOptions()
+			{
+				WriteIndented = true
+			});
+
+			File.WriteAllText(outputFile, json);
+		}		
+
+		outputFile = Path.Combine(basePath, IgnoreFilename);
+		if (!File.Exists(outputFile))
+		{
+			var ignore = new Ignore()
+			{
+				Actions = new ScriptAction[] { new(ScriptActionType.Create, new Table() {  Name = "dbo.Sample" }) }
+			};
+
+			var json = JsonSerializer.Serialize(ignore, new JsonSerializerOptions()
+			{
+				WriteIndented = true
+			});
+
+			File.WriteAllText(outputFile, json);
+		}
+	}
+
+	private static Configuration.Target FindDefaultDatabaseTarget(string basePath)
+	{
+		const string ConnectionType = "SqlServer";
+
+		var folders = new[]
+		{
+			basePath, // assumed to be project
+			Directory.GetParent(basePath)?.FullName // assumed to be solution
+		};
+
+		foreach (var folder in folders.Where(val => !string.IsNullOrWhiteSpace(val)))
+		{
+			var appSettings = FileUtil.FindWhere(folder!, "appsettings.json").FirstOrDefault();
+			if (appSettings is null) continue;
+
+			var json = File.ReadAllText(appSettings);
+			var connectionInfo = JsonUtil.FindFirstConnectionString(json);
+			if (connectionInfo.Success)
+			{
+				return new Configuration.Target()
+				{
+					Name = connectionInfo.Name!,
+					ConnectionString = connectionInfo.ConnectionString!,
+					Type = ConnectionType
+				};
+			}
+		}
+
+		return Empty();
+
+		Configuration.Target Empty() => new Configuration.Target()
+		{
+			Type = ConnectionType,
+			ConnectionString = "<add your connection string here>",
+			Name = "default"
+		};
+	}
+
+	private static string FindAssemblyPath(string basePath)
+	{
+		const string NotFound = "<no project found>";
+		var csproj = FileUtil.FindWhere(basePath, "*.csproj").FirstOrDefault() ?? NotFound;
+		if (csproj.Equals(NotFound)) return NotFound;
+
+		var csprojDoc = XDocument.Load(csproj);
+		var assemblyFileName = csprojDoc.Descendants("AssemblyName").FirstOrDefault()?.Value ?? Path.GetFileName(csproj);
+		var targetFramework = csprojDoc.Descendants("TargetFramework").FirstOrDefault()?.Value ?? "net7.0";
+		return $".\\bin\\Debug\\{targetFramework}\\{assemblyFileName}";
 	}
 
 	private static async Task<(Configuration.Target Target, string Description, Schema Schema)> GetDbSchemaAsync(Options options, Configuration config, Dictionary<string, Configuration.Target> targets)
@@ -204,9 +313,8 @@ internal class Program
 
 		var path = Path.GetFullPath(startPath);
 
-		const string ensyncConfig = "ensync.config.json";
-
-		var configFile = Path.Combine(path, ensyncConfig);
+		int loops = 0;
+		var configFile = Path.Combine(path, ConfigFilename);
 		do
 		{
 			if (File.Exists(configFile))
@@ -215,8 +323,15 @@ internal class Program
 				return (JsonSerializer.Deserialize<Configuration>(json) ?? throw new Exception("Couldn't read json"), path);
 			}
 
+			if (loops > 0)
+			{
+				CreateEmptyConfig(path);
+				return FindConfig(path);
+			}
+
 			path = Directory.GetParent(path)?.FullName ?? throw new Exception($"Couldn't get directory parent of {path}");
-			configFile = Path.Combine(path, ensyncConfig);
+			configFile = Path.Combine(path, ConfigFilename);
+			loops++;
 		} while (true);
 	}
 }

@@ -16,5 +16,5 @@ public class Employee : IEntity<int>
 	[ForeignKey(nameof(EmployeeType))]
 	public int TypeId { get; set; }
 	public DateTime HireDate { get; set; }
-	public DateTime? TerminationDate { get; set; }
+	public DateTime? TerminationDate { get; set; }	
 }

@@ -1,4 +1,4 @@
-﻿using Ensync.Core;
+﻿using Ensync.Core.Models;
 
 namespace Testing.Core;
 
