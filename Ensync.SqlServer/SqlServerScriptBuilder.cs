@@ -49,7 +49,7 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
 
 	protected override string BlockCommentEnd => "\r\n*/";
 
-	protected override string LineCommentStart => "-- ";
+	public override string LineCommentStart => "-- ";
 
 	protected override string FormatName(DbObject dbObject) => FormatName(dbObject.Name);
 

@@ -14,6 +14,12 @@ public class DatabaseMetadata
 	}
 }
 
+public enum StatementType
+{
+	Command,
+	Comment
+}
+
 public abstract class SqlScriptBuilder
 {
 	public abstract Dictionary<DbObjectType, SqlStatements> Syntax { get; }
@@ -24,7 +30,7 @@ public abstract class SqlScriptBuilder
 
 	protected abstract string BlockCommentStart { get; }
 	protected abstract string BlockCommentEnd { get; }
-	protected abstract string LineCommentStart { get; }
+	public abstract string LineCommentStart { get; }
 
 	public string ToBlockComment(string statement) => $"{BlockCommentStart}{statement}{BlockCommentEnd}";
 	public string ToLineComment(string comment) => $"{LineCommentStart}{comment}";
@@ -36,28 +42,39 @@ public abstract class SqlScriptBuilder
 		Metadata = await GetMetadataAsync();
 	}
 
-	public IEnumerable<(string, DbObject?)> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child) => actionType switch
+	public IEnumerable<(string, DbObject?)> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child, bool debug = false) => actionType switch
 	{
 		ScriptActionType.Create =>
 			Syntax[child.Type].Create.Invoke(parent, child),
 
 		ScriptActionType.Alter =>
-			DropDependencies(Syntax, schema, child)
+			DropDependencies(Syntax, schema, child, debug)
 			.Concat(Syntax[child.Type].Alter.Invoke(parent, child))
-			.Concat(CreateDependencies(Syntax, schema, child)),
+			.Concat(CreateDependencies(Syntax, schema, child, debug)),
 
 		ScriptActionType.Drop =>
-			DropDependencies(Syntax, schema, child)
-			.Concat(Syntax[child.Type].Drop.Invoke(parent, child)),
+			DropDependencies(Syntax, schema, child, debug)
+			.Concat(Syntax[child.Type].Drop.Invoke(parent, child)),			
 
 		_ => throw new NotSupportedException()
 	};
 
-	private static IEnumerable<(string, DbObject?)> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child) =>
-		child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Drop(obj.Parent, obj.Child));
+	private IEnumerable<(string, DbObject?)> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child, bool debug)
+	{
+		var results = child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Drop(obj.Parent, obj.Child)).ToList();
+		var count = results.Count;
+		if (debug) results.Insert(0, ($"{LineCommentStart} drop dependencies of {child} ({count})", null));
+		return results;
+	}
+		
 
-	private static IEnumerable<(string, DbObject?)> CreateDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child) =>
-		child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Create(obj.Parent, obj.Child));
+	private IEnumerable<(string, DbObject?)> CreateDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child, bool debug)
+	{
+		var results = child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Create(obj.Parent, obj.Child)).ToList();
+		var count = results.Count;
+		if (debug) results.Insert(0, ($"{LineCommentStart} create dependencies of {child} ({count})", null));
+		return results;
+	}
 
 	public class SqlStatements
 	{

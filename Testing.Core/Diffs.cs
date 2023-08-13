@@ -1,4 +1,5 @@
 ﻿using Ensync.Core;
+using Ensync.Core.Abstract;
 using Ensync.Core.DbObjects;
 using Ensync.Core.Extensions;
 using Ensync.SqlServer;

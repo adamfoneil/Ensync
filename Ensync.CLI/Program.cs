@@ -43,7 +43,7 @@ internal class Program
 			Console.WriteLine();
 
 			var scriptBuilder = new SqlServerScriptBuilder(target.Target.ConnectionString);
-			var script = await source.Schema.CompareAsync(target.Schema, scriptBuilder);
+			var script = await source.Schema.CompareAsync(target.Schema, scriptBuilder, o.Debug);
 
 			var statements = script.ToSqlStatements(scriptBuilder, true).ToArray();
 
@@ -53,7 +53,7 @@ internal class Program
 					PreviewChanges(statements);
 					if (statements.Any())
 					{
-						WriteColorLine("Use ensync --merge to apply changes to database", ConsoleColor.Cyan);
+						WriteColorLine("Use --merge to apply changes to database. Use --debug to show dependency comments", ConsoleColor.Cyan);
 					}					
 					break;
 

@@ -12,7 +12,7 @@ public class Schema
 
 	public Dictionary<string, Table> TableDictionary => Tables.ToDictionary(tbl => tbl.Name);
 
-	public async Task<IEnumerable<ScriptAction>> CompareAsync(Schema targetSchema, SqlScriptBuilder scriptBuilder)
+	public async Task<IEnumerable<ScriptAction>> CompareAsync(Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug = false)
 	{
 		ArgumentNullException.ThrowIfNull(nameof(targetSchema));
 		ArgumentNullException.ThrowIfNull(nameof(scriptBuilder));
@@ -24,26 +24,26 @@ public class Schema
 
 		List<ScriptAction> results = new();
 
-		AddTables(results, Tables, targetSchema, scriptBuilder);
-		AddColumns(results, Tables, targetSchema, scriptBuilder);
-		AddIndexes(results, Tables, targetSchema, scriptBuilder);
+		AddTables(results, Tables, targetSchema, scriptBuilder, debug);
+		AddColumns(results, Tables, targetSchema, scriptBuilder, debug);
+		AddIndexes(results, Tables, targetSchema, scriptBuilder, debug);
 		// AddChecks
-		AddForeignKeys(results, ForeignKeys, targetSchema, scriptBuilder);
+		AddForeignKeys(results, ForeignKeys, targetSchema, scriptBuilder, debug);
 
-		AlterColumns(results, Tables, targetSchema, scriptBuilder);
+		AlterColumns(results, Tables, targetSchema, scriptBuilder, debug);
 		// AlterIndexes
 		// AlterChecks
 		// AlterForeignKeys
 
-		DropTables(results, Tables, targetSchema, scriptBuilder);
-		DropColumns(results, Tables, targetSchema, scriptBuilder);
-		DropIndexes(results, Tables, targetSchema, scriptBuilder);
-		DropForeignKeys(results, ForeignKeys, targetSchema, scriptBuilder);
+		DropTables(results, Tables, targetSchema, scriptBuilder, debug);
+		DropColumns(results, Tables, targetSchema, scriptBuilder, debug);
+		DropIndexes(results, Tables, targetSchema, scriptBuilder, debug);
+		DropForeignKeys(results, ForeignKeys, targetSchema, scriptBuilder, debug);
 
 		return results;
 	}
 
-	private static void DropForeignKeys(List<ScriptAction> results, IEnumerable<ForeignKey> foreignKeys, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+	private static void DropForeignKeys(List<ScriptAction> results, IEnumerable<ForeignKey> foreignKeys, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
 		results.AddRange(targetSchema.ForeignKeys.Except(foreignKeys).Select(fk => new ScriptAction(ScriptActionType.Drop, fk)
 		{
@@ -51,7 +51,7 @@ public class Schema
 		}));
 	}
 
-	private static void AlterColumns(List<ScriptAction> results, IEnumerable<Table> tables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+	private static void AlterColumns(List<ScriptAction> results, IEnumerable<Table> tables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
 		var commonTables = GetCommonTables(tables, targetSchema.Tables);
 		var commonColumns = commonTables.SelectMany(GetCommonColumns);
@@ -70,15 +70,15 @@ public class Schema
 			col => col, col => col,
 			(sourceCol, targetCol) => (sourceCol, targetCol));
 
-	public async Task<IEnumerable<ScriptAction>> CreateAsync(SqlScriptBuilder scriptBuilder)
+	public async Task<IEnumerable<ScriptAction>> CreateAsync(SqlScriptBuilder scriptBuilder, bool debug = false)
 	{
 		var target = new Schema();
-		return await CompareAsync(target, scriptBuilder);
+		return await CompareAsync(target, scriptBuilder, debug);
 	}
 
-	public async Task<string> CreateScriptAsync(SqlScriptBuilder scriptBuilder, string separator)
+	public async Task<string> CreateScriptAsync(SqlScriptBuilder scriptBuilder, string separator, bool debug = false)
 	{
-		var script = await CreateAsync(scriptBuilder);
+		var script = await CreateAsync(scriptBuilder, debug);
 		return script.ToSqlScript(separator, scriptBuilder);
 	}
 
@@ -97,18 +97,18 @@ public class Schema
 		}
 	}
 
-	private static void AddIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+	private static void AddIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
 		var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
 
 		results.AddRange(commonTables.SelectMany(tblPair => tblPair.Source.Indexes.Except(tblPair.Target.Indexes))
 			.Select(ndx => new ScriptAction(ScriptActionType.Create, ndx)
 			{
-				Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, ndx.Parent, ndx),
+				Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, ndx.Parent, ndx, debug),
 			}));
 	}
 
-	private static void DropIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+	private static void DropIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
 		var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
 		var alreadyDroppedIndexes = results.Where(IsDrop).SelectMany(a => a.Statements.Select(st => st.AffectedObject).OfType<Index>());
@@ -116,20 +116,20 @@ public class Schema
 		results.AddRange(commonTables.SelectMany(tblPair => tblPair.Target.Indexes.Except(tblPair.Source.Indexes.Concat(alreadyDroppedIndexes)))
 			.Select(ndx => new ScriptAction(ScriptActionType.Drop, ndx)
 			{
-				Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, ndx.Parent, ndx)
+				Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, ndx.Parent, ndx, debug)
 			}));
 
 		static bool IsDrop(ScriptAction action) => action.Action == ScriptActionType.Drop;
 	}
 
-	private static void AddForeignKeys(List<ScriptAction> results, IEnumerable<ForeignKey> foreignKeys, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+	private static void AddForeignKeys(List<ScriptAction> results, IEnumerable<ForeignKey> foreignKeys, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
 		results.AddRange(foreignKeys
 			.Where(ReferencedTableCreatedOrExists)
 			.Except(targetSchema.ForeignKeys)
 			.Select(fk => new ScriptAction(ScriptActionType.Create, fk)
 			{
-				Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, fk.Parent, fk)
+				Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, fk.Parent, fk, debug)
 			}));
 
 		bool ReferencedTableCreatedOrExists(ForeignKey key)
@@ -141,35 +141,35 @@ public class Schema
 		}
 	}
 
-	private static void AddTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+	private static void AddTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
 		results.AddRange(sourceTables.Except(targetSchema.Tables).Select(tbl => new ScriptAction(ScriptActionType.Create, tbl)
 		{
-			Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, null, tbl)
+			Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, null, tbl, debug)
 		}));
 	}
 
-	private static void DropTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+	private static void DropTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
 		results.AddRange(targetSchema.Tables.Except(sourceTables).Select(tbl => new ScriptAction(ScriptActionType.Drop, tbl)
 		{
 			IsDestructive = scriptBuilder.Metadata.GetRowCount(tbl.Name) > 0,
 			Message = scriptBuilder.Metadata.GetDropWarning(tbl.Name),
-			Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, null, tbl)
+			Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, null, tbl, debug)
 		}));
 	}
 
-	private static void AddColumns(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+	private static void AddColumns(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
 		var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
 
 		results.AddRange(commonTables.SelectMany(tablePair => tablePair.Source.Columns.Except(tablePair.Target.Columns).Select(col => new ScriptAction(ScriptActionType.Create, col)
 		{
-			Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, tablePair.Source, col)
+			Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, tablePair.Source, col, debug)
 		})));
 	}
 
-	private static void DropColumns(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder)
+	private static void DropColumns(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
 		var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
 
@@ -177,7 +177,7 @@ public class Schema
 		{
 			IsDestructive = scriptBuilder.Metadata.GetRowCount(tablePair.Target.Name) > 0,
 			Message = scriptBuilder.Metadata.GetDropWarning(tablePair.Target.Name),
-			Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, tablePair.Source, col)
+			Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, tablePair.Source, col, debug)
 		})));
 	}
 
