@@ -45,6 +45,9 @@ internal class Options
 	[Option('r', "script", HelpText = "Builds a .sql script file and launches it. Same as setting action = Script")]
 	public bool Script { get; set; }
 
+	[Option('d', "debug", HelpText = "Emits comments that help explain how SQL is being generated")]
+	public bool Debug { get; set; }
+
 	public Action Action => Enum.Parse<Action>(ActionName);
 	public bool UseAssemblySource => string.IsNullOrWhiteSpace(Source);
 }

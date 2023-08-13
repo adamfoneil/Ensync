@@ -7,6 +7,7 @@ using Ensync.Core.Models;
 using Ensync.Dotnet7;
 using Ensync.SqlServer;
 using Microsoft.Data.SqlClient;
+using System.Reflection;
 using System.Text.Json;
 using System.Xml.Linq;
 
@@ -21,6 +22,8 @@ internal class Program
 	{		
 		await Parser.Default.ParseArguments<Options>(args).WithParsedAsync(async o =>
 		{
+			WriteColorLine($"Ensync version {GetVersion()}", ConsoleColor.Cyan);			
+
 			var config = FindConfig(o.ConfigPath);
 
 			if (o.Init)
@@ -45,9 +48,13 @@ internal class Program
 			var statements = script.ToSqlStatements(scriptBuilder, true).ToArray();
 
 			switch (o.Action)
-			{				
+			{
 				case Action.Preview:
 					PreviewChanges(statements);
+					if (statements.Any())
+					{
+						WriteColorLine("Use ensync --merge to apply changes to database", ConsoleColor.Cyan);
+					}					
 					break;
 
 				case Action.Merge:
@@ -65,6 +72,8 @@ internal class Program
 		});
 	}
 
+	private static string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "<unkown version>";
+
 	private static void CreateSqlScript(string basePath, string[] statements)
 	{
 		throw new NotImplementedException();
@@ -78,6 +87,7 @@ internal class Program
 
 	private static void CreateEmptyConfig(string basePath)
 	{
+		Console.WriteLine("Creating empty configuration...");
 		var outputFile = Path.Combine(basePath, ConfigFilename);
 		
 		if (!File.Exists(outputFile))
@@ -274,7 +284,7 @@ internal class Program
 			Console.Write($"Creating database {ConnectionString.Database(connectionString)}...");
 			if (TryCreateDbIfNotExists(connectionString))
 			{
-				Thread.Sleep(1000);
+				Thread.Sleep(1000);				
 				return;
 			}
 			throw;
@@ -294,7 +304,25 @@ internal class Program
 				if (!SqlServerUtil.DatabaseExists(cn, dbName))
 				{
 					SqlServerUtil.Execute(cn, $"CREATE DATABASE [{dbName}]");
+					int count = 0;
+					do
+					{
+						Thread.Sleep(500);
+						try
+						{
+							using var testCn = new SqlConnection(originalConnectionString);
+							testCn.Open();
+							testCn.Close();
+							return true;
+						}
+						catch
+						{
+							if (count > 10) throw;
+						}
+						count++;
+					} while (true);
 				}
+				cn.Close();
 				return true;
 			}
 		}
@@ -325,5 +353,13 @@ internal class Program
 
 		CreateEmptyConfig(path);
 		return FindConfig(path);
+	}
+
+	private static void WriteColorLine(string text, ConsoleColor color)
+	{
+		var currenColor = Console.ForegroundColor;
+		Console.ForegroundColor = color;
+		Console.WriteLine(text);
+		Console.ForegroundColor = currenColor;
 	}
 }
