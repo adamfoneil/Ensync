@@ -21,16 +21,18 @@ public class AssemblySchemaInspector : SchemaInspector
 
 	public AssemblySchemaInspector(string fileName)
 	{
+		if (!File.Exists(fileName)) throw new FileNotFoundException(fileName);
+
 		var depsFile = Path.Combine(
 			Path.GetDirectoryName(fileName) ?? throw new Exception($"Couldn't get directory name from {fileName}"),
 			Path.GetFileNameWithoutExtension(fileName) + ".deps.json");
 
-		if (!File.Exists(depsFile)) throw new FileNotFoundException($"Couldn't find dependency info file {depsFile}");
-
-		_dependencyContext ??= LoadDependencyContext(depsFile) ?? throw new Exception("Couldn't load dependency context");
-
-		AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
-
+		if (File.Exists(depsFile))
+		{
+			_dependencyContext ??= LoadDependencyContext(depsFile) ?? throw new Exception("Couldn't load dependency context");
+			AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+		}
+		
 		_assembly = Assembly.LoadFile(fileName);
 		TypeFilter = (type) => true;
 	}

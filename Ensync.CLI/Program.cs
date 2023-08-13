@@ -154,7 +154,7 @@ internal class Program
 		if (csproj.Equals(NotFound)) return NotFound;
 
 		var csprojDoc = XDocument.Load(csproj);
-		var assemblyFileName = csprojDoc.Descendants("AssemblyName").FirstOrDefault()?.Value ?? Path.GetFileName(csproj);
+		var assemblyFileName = csprojDoc.Descendants("AssemblyName").FirstOrDefault()?.Value ?? Path.GetFileNameWithoutExtension(csproj) + ".dll";
 		var targetFramework = csprojDoc.Descendants("TargetFramework").FirstOrDefault()?.Value ?? "net7.0";
 		return $".\\bin\\Debug\\{targetFramework}\\{assemblyFileName}";
 	}
@@ -325,6 +325,7 @@ internal class Program
 
 			if (loops > 0)
 			{
+				// todo: this needs to be down a level at the project path, not at the solution level
 				CreateEmptyConfig(path);
 				return FindConfig(path);
 			}
