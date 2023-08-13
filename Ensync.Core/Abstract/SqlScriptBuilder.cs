@@ -49,21 +49,28 @@ public abstract class SqlScriptBuilder
 
 		ScriptActionType.Alter =>
 			DropDependencies(Syntax, schema, child, debug)
+			.Concat(Comment(debug, $"alter {child}"))
 			.Concat(Syntax[child.Type].Alter.Invoke(parent, child))
 			.Concat(CreateDependencies(Syntax, schema, child, debug)),
 
 		ScriptActionType.Drop =>
 			DropDependencies(Syntax, schema, child, debug)
+			.Concat(Comment(debug, $"drop {child}"))
 			.Concat(Syntax[child.Type].Drop.Invoke(parent, child)),			
 
 		_ => throw new NotSupportedException()
 	};
 
+	private IEnumerable<(string, DbObject?)> Comment(bool debug, string text)
+	{
+		if (debug) yield return ($"{LineCommentStart}{text}", null);
+	}
+
 	private IEnumerable<(string, DbObject?)> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child, bool debug)
 	{
 		var results = child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Drop(obj.Parent, obj.Child)).ToList();
 		var count = results.Count;
-		if (debug) results.Insert(0, ($"{LineCommentStart} drop dependencies of {child} ({count})", null));
+		if (debug) results.Insert(0, ($"{LineCommentStart}drop dependencies of {child} ({count})", null));
 		return results;
 	}
 		
