@@ -15,6 +15,8 @@ internal class Program
 	{
 		await Parser.Default.ParseArguments<Options>(args).WithParsedAsync(async o =>
 		{
+			if (o.Merge) o.ActionName = "Merge";
+
 			var config = FindConfig(o.ConfigPath);
 			var targets = config.Data.DatabaseTargets.ToDictionary(item => item.Name);
 
@@ -56,7 +58,7 @@ internal class Program
 		EnsureValidDbTarget(target.ConnectionString);
 
 		var dbInspector = new SqlServerSchemaInspector(target.ConnectionString);
-		var description = $"database {ConnectionString.Server(target.ConnectionString)}.{ConnectionString.Database(target.ConnectionString)}";
+		var description = $"database {target.Name}";
 		return (target, description, await dbInspector.GetSchemaAsync());
 	}
 

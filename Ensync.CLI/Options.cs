@@ -36,6 +36,9 @@ internal class Options
 	[Option('a', "action", Required = false, Default = "Preview", HelpText = "Action to perform")]
 	public string ActionName { get; set; } = default!;
 
+	[Option('m', "merge", HelpText = "Same as setting action = Merge")]
+	public bool Merge { get; set; }
+
 	public Action Action => Enum.Parse<Action>(ActionName);
 	public bool UseAssemblySource => string.IsNullOrWhiteSpace(Source);
 }
