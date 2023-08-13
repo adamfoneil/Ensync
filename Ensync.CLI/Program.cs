@@ -265,12 +265,18 @@ internal class Program
 	{
 		try
 		{
+			Console.WriteLine("Checking database...");
 			using var cn = new SqlConnection(connectionString);
 			cn.Open();
 		}
 		catch
 		{
-			if (TryCreateDbIfNotExists(connectionString)) return;
+			Console.Write($"Creating database {ConnectionString.Database(connectionString)}...");
+			if (TryCreateDbIfNotExists(connectionString))
+			{
+				Thread.Sleep(1000);
+				return;
+			}
 			throw;
 		}
 	}
@@ -309,30 +315,15 @@ internal class Program
 
 	private static (Configuration Data, string BasePath) FindConfig(string configPath)
 	{
-		var startPath = configPath;
-
-		var path = Path.GetFullPath(startPath);
-
-		int loops = 0;
+		var path = Path.GetFullPath(configPath);
 		var configFile = Path.Combine(path, ConfigFilename);
-		do
+		if (File.Exists(configFile))
 		{
-			if (File.Exists(configFile))
-			{
-				var json = File.ReadAllText(configFile);
-				return (JsonSerializer.Deserialize<Configuration>(json) ?? throw new Exception("Couldn't read json"), path);
-			}
+			var json = File.ReadAllText(configFile);
+			return (JsonSerializer.Deserialize<Configuration>(json) ?? throw new Exception("Couldn't read json"), path);
+		}
 
-			if (loops > 0)
-			{
-				// todo: this needs to be down a level at the project path, not at the solution level
-				CreateEmptyConfig(path);
-				return FindConfig(path);
-			}
-
-			path = Directory.GetParent(path)?.FullName ?? throw new Exception($"Couldn't get directory parent of {path}");
-			configFile = Path.Combine(path, ConfigFilename);
-			loops++;
-		} while (true);
+		CreateEmptyConfig(path);
+		return FindConfig(path);
 	}
 }
