@@ -182,20 +182,20 @@ public class SqlServerSchemaInspector : SchemaInspector
 	{
 		return await cn.QueryAsync<Table>(
 			@"WITH [clusteredIndexes] AS (
-					SELECT [name], [object_id] FROM [sys].[indexes] WHERE [type_desc]='CLUSTERED'
-				), [identityColumns] AS (
-					SELECT [object_id], [name] FROM [sys].[columns] WHERE [is_identity]=1
-				) SELECT
-					SCHEMA_NAME([t].[schema_id]) + '.' + [t].[name] AS [Name],					
-					[t].[object_id] AS [ObjectId],
-					[c].[name] AS [ClusteredIndex],
-					[i].[name] AS [IdentityColumn]					
-				FROM
-					[sys].[tables] [t]
-					LEFT JOIN [clusteredIndexes] [c] ON [t].[object_id]=[c].[object_id]
-					LEFT JOIN [identityColumns] [i] ON [t].[object_id]=[i].[object_id]
-				WHERE					
-					[t].[name] NOT IN ('__MigrationHistory', '__EFMigrationsHistory')");
+				SELECT [name], [object_id] FROM [sys].[indexes] WHERE [type_desc]='CLUSTERED'
+			), [identityColumns] AS (
+				SELECT [object_id], [name] FROM [sys].[columns] WHERE [is_identity]=1
+			) SELECT
+				SCHEMA_NAME([t].[schema_id]) + '.' + [t].[name] AS [Name],					
+				[t].[object_id] AS [ObjectId],
+				[c].[name] AS [ClusteredIndex],
+				[i].[name] AS [IdentityColumn]					
+			FROM
+				[sys].[tables] [t]
+				LEFT JOIN [clusteredIndexes] [c] ON [t].[object_id]=[c].[object_id]
+				LEFT JOIN [identityColumns] [i] ON [t].[object_id]=[i].[object_id]
+			WHERE					
+				[t].[name] NOT IN ('__MigrationHistory', '__EFMigrationsHistory')");
 	}
 
 	private static async Task<IEnumerable<ForeignKey>> GetForeignKeysAsync(SqlConnection cn, IEnumerable<Table> tables)
