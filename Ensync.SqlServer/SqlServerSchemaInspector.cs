@@ -78,9 +78,8 @@ public class SqlServerSchemaInspector : SchemaInspector
 				[t].[type_desc]='USER_TABLE'");
 	}
 
-	private static async Task<IEnumerable<Index>> GetIndexesAsync(SqlConnection cn)
-	{
-		return await cn.QueryAsync<Index>(
+	private static async Task<IEnumerable<Index>> GetIndexesAsync(SqlConnection cn) =>
+		await cn.QueryAsync<Index>(
 			@"SELECT
 				[x].[object_id] AS [ObjectId],
 				[x].[name] AS [Name],
@@ -101,11 +100,10 @@ public class SqlServerSchemaInspector : SchemaInspector
 			WHERE
 				[t].[type_desc]='USER_TABLE' AND
 				[x].[type]<>0");
-	}
 
-	private static async Task<IEnumerable<CheckConstraint>> GetCheckConstraintsAsync(SqlConnection cn)
-	{
-		return await cn.QueryAsync<CheckConstraint>(
+
+	private static async Task<IEnumerable<CheckConstraint>> GetCheckConstraintsAsync(SqlConnection cn) =>
+		await cn.QueryAsync<CheckConstraint>(
 			@"SELECT
 				[ck].[parent_object_id] AS [ObjectId],
 				[ck].[name] AS [Name],
@@ -114,11 +112,9 @@ public class SqlServerSchemaInspector : SchemaInspector
 				[sys].[check_constraints] [ck]
 			WHERE
 				[ck].[type]='C'");
-	}
 
-	private static async Task<IEnumerable<Column>> GetColumnAsync(SqlConnection cn)
-	{
-		return await cn.QueryAsync<Column>(
+	private static async Task<IEnumerable<Column>> GetColumnAsync(SqlConnection cn) =>
+		await cn.QueryAsync<Column>(
 			@"WITH [identityColumns] AS (
 				SELECT [object_id], [name] FROM [sys].[columns] WHERE [is_identity]=1
 			), [source] AS (
@@ -176,11 +172,9 @@ public class SqlServerSchemaInspector : SchemaInspector
 				END AS [TypeModifier]
 			FROM
 				[source]");
-	}
 
-	private static async Task<IEnumerable<Table>> GetTablesAsync(SqlConnection cn)
-	{
-		return await cn.QueryAsync<Table>(
+	private static async Task<IEnumerable<Table>> GetTablesAsync(SqlConnection cn) =>
+		await cn.QueryAsync<Table>(
 			@"WITH [clusteredIndexes] AS (
 				SELECT [name], [object_id] FROM [sys].[indexes] WHERE [type_desc]='CLUSTERED'
 			), [identityColumns] AS (
@@ -196,7 +190,6 @@ public class SqlServerSchemaInspector : SchemaInspector
 				LEFT JOIN [identityColumns] [i] ON [t].[object_id]=[i].[object_id]
 			WHERE					
 				[t].[name] NOT IN ('__MigrationHistory', '__EFMigrationsHistory')");
-	}
 
 	private static async Task<IEnumerable<ForeignKey>> GetForeignKeysAsync(SqlConnection cn, IEnumerable<Table> tables)
 	{
