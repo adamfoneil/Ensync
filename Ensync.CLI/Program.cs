@@ -8,6 +8,7 @@ using Ensync.Core.Models;
 using Ensync.Dotnet7;
 using Ensync.SqlServer;
 using Microsoft.Data.SqlClient;
+using System.IO.Compression;
 using System.Reflection;
 using System.Text.Json;
 using System.Xml.Linq;
@@ -70,7 +71,7 @@ internal class Program
 					break;
 
 				case Action.CaptureTestCase:
-					await WriteZipFileAsync("TestCase.zip", new(string, object)[]
+					WriteZipFile(config.BasePath, "TestCase.zip", new(string, object)[]
 					{
 						("source.json", source.Schema),
 						("target.json", target.Schema),
@@ -81,9 +82,20 @@ internal class Program
 		});
 	}
 
-	private static Task WriteZipFileAsync(string fileName, (string, object)[] contents)
+	private static void WriteZipFile(string path, string zipFilename, (string, object)[] contents)
 	{
-		throw new NotImplementedException();
+		var zipPath = Path.Combine(path, zipFilename);
+		if (File.Exists(zipPath)) File.Delete(zipPath);
+
+		using var stream = File.Create(zipPath);
+		using var zipFile = new ZipArchive(stream); // not working
+
+		foreach (var item in contents)
+		{
+			var entry = zipFile.CreateEntry(item.Item1);
+			using var entryStream = entry.Open();
+			JsonSerializer.Serialize(entryStream, item.Item2);
+		}				
 	}
 
 	private static string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "<unkown version>";
