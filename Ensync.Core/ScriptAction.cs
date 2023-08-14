@@ -1,4 +1,5 @@
 ﻿using Ensync.Core.Abstract;
+using Ensync.Core.DbObjects;
 
 namespace Ensync.Core;
 
@@ -17,7 +18,7 @@ public class ScriptAction
 		Object = @object;
 	}
 
-	public ScriptActionType Action { get; init; }
+    public ScriptActionType Action { get; init; }
 	public DbObject Object { get; init; }
 	/// <summary>
 	/// the AffectedObject is usually the Object, but it will be different when the Statement
@@ -44,4 +45,11 @@ public class ScriptAction
 	}
 
 	public override int GetHashCode() => (Action.ToString() + Object.Name).GetHashCode();
+
+	public ScriptActionKey ToScriptActionKey() => new(Action, Object.Name, Object.Type);
+}
+
+public record ScriptActionKey(ScriptActionType Action, string ObjectName, DbObjectType ObjectType)
+{
+	public ScriptAction ToScriptAction() => new(Action, new Placeholder(ObjectType, ObjectName));
 }

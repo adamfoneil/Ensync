@@ -1,6 +1,7 @@
 ﻿using AO.ConnectionStrings;
 using CommandLine;
 using Ensync.Core;
+using Ensync.Core.Abstract;
 using Ensync.Core.DbObjects;
 using Ensync.Core.Extensions;
 using Ensync.Core.Models;
@@ -33,7 +34,6 @@ internal class Program
 			}
 
 			if (o.Merge) o.ActionName = "Merge";
-
 			
 			var targets = config.Data.DatabaseTargets.ToDictionary(item => item.Name);
 
@@ -45,7 +45,7 @@ internal class Program
 			var scriptBuilder = new SqlServerScriptBuilder(target.Target.ConnectionString);
 			var script = await source.Schema.CompareAsync(target.Schema, scriptBuilder, o.Debug);
 
-			var statements = script.ToSqlStatements(scriptBuilder, true).ToArray();
+			var statements = script.Except(config.Ignore.ToScriptActions()).ToSqlStatements(scriptBuilder, true).ToArray();
 
 			switch (o.Action)
 			{
@@ -53,7 +53,7 @@ internal class Program
 					PreviewChanges(statements);
 					if (statements.Any())
 					{
-						WriteColorLine("Use --merge to apply changes to database. Use --debug to show dependency comments", ConsoleColor.Cyan);
+						WriteColorLine("Use --merge to apply changes to database. Use --debug to show script comments", ConsoleColor.Cyan);
 					}					
 					break;
 
@@ -68,7 +68,6 @@ internal class Program
 				case Action.Ignore:
 					break;
 			}
-
 		});
 	}
 
@@ -107,7 +106,7 @@ internal class Program
 		{
 			var ignore = new Ignore()
 			{
-				Actions = new ScriptAction[] { new(ScriptActionType.Create, new Table() {  Name = "dbo.Sample" }) }
+				Actions = new ScriptActionKey[] { new(ScriptActionType.Create, "dbo.Sample", DbObjectType.Table ) }
 			};
 
 			var json = JsonSerializer.Serialize(ignore, new JsonSerializerOptions()
@@ -341,14 +340,30 @@ internal class Program
 		}
 	}
 
-	private static (Configuration Data, string BasePath) FindConfig(string configPath)
+	private static (Configuration Data, Ignore Ignore, string BasePath) FindConfig(string configPath)
 	{
 		var path = Path.GetFullPath(configPath);
 		var configFile = Path.Combine(path, ConfigFilename);
+		var ignoreFile = Path.Combine(path, IgnoreFilename);
+
+		Configuration? config = default;
+		Ignore ignore = new();
+
 		if (File.Exists(configFile))
 		{
 			var json = File.ReadAllText(configFile);
-			return (JsonSerializer.Deserialize<Configuration>(json) ?? throw new Exception("Couldn't read json"), path);
+			config = JsonSerializer.Deserialize<Configuration>(json) ?? throw new Exception("Couldn't read config file json");
+		}
+
+		if (File.Exists(ignoreFile))
+		{
+			var json = File.ReadAllText(ignoreFile);
+			ignore = JsonSerializer.Deserialize<Ignore>(json) ?? throw new Exception("Couldn't read ignore file json");
+		}
+
+		if (config is not null)
+		{
+			return (config, ignore, path);
 		}
 
 		CreateEmptyConfig(path);

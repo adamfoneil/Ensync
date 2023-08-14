@@ -2,5 +2,7 @@
 
 public class Ignore
 {
-    public ScriptAction[] Actions { get; set; } = Array.Empty<ScriptAction>();
+    public ScriptActionKey[] Actions { get; set; } = Array.Empty<ScriptActionKey>();
+
+    public IEnumerable<ScriptAction> ToScriptActions() => Actions.Select(a => a.ToScriptAction());
 }
