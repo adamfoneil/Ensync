@@ -34,6 +34,7 @@ internal class Program
 			}
 
 			if (o.Merge) o.ActionName = "Merge";
+			if (o.Script) o.ActionName = "Script";
 			
 			var targets = config.Data.DatabaseTargets.ToDictionary(item => item.Name);
 
@@ -67,8 +68,22 @@ internal class Program
 
 				case Action.Ignore:
 					break;
+
+				case Action.CaptureTestCase:
+					await WriteZipFileAsync("TestCase.zip", new(string, object)[]
+					{
+						("source.json", source.Schema),
+						("target.json", target.Schema),
+						("statements.json", statements)
+					});
+					break;
 			}
 		});
+	}
+
+	private static Task WriteZipFileAsync(string fileName, (string, object)[] contents)
+	{
+		throw new NotImplementedException();
 	}
 
 	private static string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "<unkown version>";

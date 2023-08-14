@@ -19,7 +19,11 @@ public enum Action
 	/// <summary>
 	/// add a script action to the ignore list
 	/// </summary>
-	Ignore
+	Ignore,
+	/// <summary>
+	/// creates a zip file of source and dest schemas along with the generated statements for later inspection
+	/// </summary>
+	CaptureTestCase
 }
 
 internal class Options
