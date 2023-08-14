@@ -70,13 +70,14 @@ internal class Program
 				case Action.Ignore:
 					break;
 
-				case Action.CaptureTestCase:
+				case Action.CaptureTestCase:					
 					WriteZipFile(config.BasePath, "TestCase.zip", new(string, object)[]
 					{
 						("source.json", source.Schema),
 						("target.json", target.Schema),
 						("statements.json", statements)
 					});
+					WriteColorLine("Created zip file test case", ConsoleColor.Green);
 					break;
 			}
 		});
@@ -88,13 +89,16 @@ internal class Program
 		if (File.Exists(zipPath)) File.Delete(zipPath);
 
 		using var stream = File.Create(zipPath);
-		using var zipFile = new ZipArchive(stream); // not working
+		using var zipFile = new ZipArchive(stream, ZipArchiveMode.Create); // not working
 
 		foreach (var item in contents)
 		{
 			var entry = zipFile.CreateEntry(item.Item1);
 			using var entryStream = entry.Open();
-			JsonSerializer.Serialize(entryStream, item.Item2);
+			JsonSerializer.Serialize(entryStream, item.Item2, options: new JsonSerializerOptions()
+			{
+				WriteIndented = true
+			});
 		}				
 	}
 

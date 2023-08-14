@@ -1,6 +1,7 @@
 ﻿using Ensync.Core.Abstract;
 using Ensync.Core.DbObjects;
 using Ensync.Core.Extensions;
+using System.Text.Json.Serialization;
 using Index = Ensync.Core.DbObjects.Index;
 
 namespace Ensync.Core;
@@ -10,6 +11,7 @@ public class Schema
 	public IEnumerable<Table> Tables { get; set; } = Enumerable.Empty<Table>();
 	public IEnumerable<ForeignKey> ForeignKeys { get; set; } = Enumerable.Empty<ForeignKey>();
 
+	[JsonIgnore]
 	public Dictionary<string, Table> TableDictionary => Tables.ToDictionary(tbl => tbl.Name);
 
 	public async Task<IEnumerable<ScriptAction>> CompareAsync(Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug = false)
