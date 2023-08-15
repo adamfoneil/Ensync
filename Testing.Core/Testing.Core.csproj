@@ -10,12 +10,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="EmbeddedCases\UnexpectedUniqueDrop.zip" />
     <None Remove="Resources\appsettings.json" />
     <None Remove="Resources\Ginseng8.dacpac" />
     <None Remove="Resources\UserVoice.dacpac" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="EmbeddedCases\UnexpectedUniqueDrop.zip" />
     <EmbeddedResource Include="Resources\appsettings.json" />
     <EmbeddedResource Include="Resources\Ginseng8.dacpac" />
     <EmbeddedResource Include="Resources\UserVoice.dacpac" />

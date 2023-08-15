@@ -2,7 +2,6 @@
 using CommandLine;
 using Ensync.Core;
 using Ensync.Core.Abstract;
-using Ensync.Core.DbObjects;
 using Ensync.Core.Extensions;
 using Ensync.Core.Models;
 using Ensync.Dotnet7;
@@ -73,6 +72,7 @@ internal class Program
 				case Action.CaptureTestCase:					
 					WriteZipFile(config.BasePath, "TestCase.zip", new(string, object)[]
 					{
+						("connection.json", target.Target.ConnectionString),
 						("source.json", source.Schema),
 						("target.json", target.Schema),
 						("statements.json", statements)

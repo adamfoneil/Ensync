@@ -1,4 +1,6 @@
-﻿namespace Ensync.Core.Abstract;
+﻿using System.Text.Json.Serialization;
+
+namespace Ensync.Core.Abstract;
 
 public enum DbObjectType
 {
@@ -15,6 +17,7 @@ public abstract class DbObject
 	public int ObjectId { get; init; }
 	public abstract DbObjectType Type { get; }
 	public string Name { get; init; } = default!;
+	[JsonIgnore]
 	public DbObject? Parent { get; set; }
 
 	public virtual (bool Result, string? Message) IsAltered(DbObject compareWith) => (false, null);
