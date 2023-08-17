@@ -3,7 +3,9 @@
 public class DatabaseMetadata
 {
 	public HashSet<string> Schemas { get; init; } = new();
-	public HashSet<string> Tables { get; init; } = new();
+	public HashSet<string> TableNames { get; init; } = new();
+	public HashSet<string> ForeignKeyNames { get; init; } = new();
+	public HashSet<string> IndexNames { get; init; } = new();
 	public Dictionary<string, long> RowCounts { get; init; } = new();
 	public long GetRowCount(string tableName) => RowCounts.TryGetValue(tableName, out var count) ? count : 0;
 
@@ -83,7 +85,12 @@ public abstract class SqlScriptBuilder
 		return results;
 	}
 
-	public class SqlStatements
+    internal bool TargetObjectExists(DbObject dbObject)
+    {
+        throw new NotImplementedException();
+    }
+
+    public class SqlStatements
 	{
 		public Func<DbObject, string>? Definition { get; init; }
 		public required Func<DbObject?, DbObject, IEnumerable<(string, DbObject?)>> Create { get; init; }

@@ -83,7 +83,7 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
 		return new DatabaseMetadata()
 		{
 			Schemas = schemas,
-			Tables = tables,
+			TableNames = tables,
 			RowCounts = rowCounts
 		};
 	}

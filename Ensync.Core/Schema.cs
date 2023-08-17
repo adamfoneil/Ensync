@@ -47,7 +47,9 @@ public class Schema
 
 	private static void DropForeignKeys(List<ScriptAction> results, IEnumerable<ForeignKey> foreignKeys, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
-		results.AddRange(targetSchema.ForeignKeys.Except(foreignKeys).Select(fk => new ScriptAction(ScriptActionType.Drop, fk)
+		results.AddRange(targetSchema.ForeignKeys.Except(foreignKeys)
+			.Where(scriptBuilder.TargetObjectExists)
+			.Select(fk => new ScriptAction(ScriptActionType.Drop, fk)
 		{
 			Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, fk.Parent, fk)
 		}));
@@ -115,7 +117,9 @@ public class Schema
 		var commonTables = GetCommonTables(sourceTables, targetSchema.Tables);
 		var alreadyDroppedIndexes = results.Where(IsDrop).SelectMany(a => a.Statements.Select(st => st.AffectedObject).OfType<Index>());
 
-		results.AddRange(commonTables.SelectMany(tblPair => tblPair.Target.Indexes.Except(tblPair.Source.Indexes.Concat(alreadyDroppedIndexes)))
+		results.AddRange(commonTables
+			.SelectMany(tblPair => tblPair.Target.Indexes.Except(tblPair.Source.Indexes.Concat(alreadyDroppedIndexes)))
+			.Where(scriptBuilder.TargetObjectExists)
 			.Select(ndx => new ScriptAction(ScriptActionType.Drop, ndx)
 			{
 				Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, ndx.Parent, ndx, debug)
@@ -137,7 +141,7 @@ public class Schema
 		bool ReferencedTableCreatedOrExists(ForeignKey key)
 		{
 			if (results.Any(sa => sa.Object.Equals(key.ReferencedTable))) return true;
-			if (scriptBuilder.Metadata.Tables.Contains(key.ReferencedTable.Name)) return true;
+			if (scriptBuilder.Metadata.TableNames.Contains(key.ReferencedTable.Name)) return true;
 
 			return false;
 		}
@@ -153,7 +157,9 @@ public class Schema
 
 	private static void DropTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
-		results.AddRange(targetSchema.Tables.Except(sourceTables).Select(tbl => new ScriptAction(ScriptActionType.Drop, tbl)
+		results.AddRange(targetSchema.Tables.Except(sourceTables)
+			.Where(scriptBuilder.TargetObjectExists)
+			.Select(tbl => new ScriptAction(ScriptActionType.Drop, tbl)
 		{
 			IsDestructive = scriptBuilder.Metadata.GetRowCount(tbl.Name) > 0,
 			Message = scriptBuilder.Metadata.GetDropWarning(tbl.Name),
