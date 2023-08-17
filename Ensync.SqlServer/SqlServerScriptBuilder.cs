@@ -71,8 +71,11 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
 	protected override async Task<DatabaseMetadata> GetMetadataAsync()
 	{
 		using var cn = new SqlConnection(_connectionString);
+
 		var schemas = (await cn.QueryAsync<string>("SELECT [name] FROM [sys].[schemas]")).Select(val => val.ToLower()).ToHashSet();
+
 		var tables = (await cn.QueryAsync<string>("SELECT SCHEMA_NAME([schema_id]) + '.' + [name] FROM [sys].[tables]")).Select(val => val.ToLower()).ToHashSet();
+
 		var rowCounts = (await cn.QueryAsync<(string, long)>(
 			@"SELECT SCHEMA_NAME([t].[schema_id]) + '.' + [t].[name] AS [TableName], SUM([row_count]) AS [RowCount]
             FROM [sys].[dm_db_partition_stats] [st] 
@@ -80,11 +83,20 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
             WHERE [index_id] IN (0, 1)
             GROUP BY SCHEMA_NAME([t].[schema_id]), [t].[name]")).ToDictionary(row => row.Item1, row => row.Item2);
 
+		var indexNames = (await cn.QueryAsync<string>(
+			@"SELECT [ndx].[name]
+			FROM [sys].[indexes] [ndx]
+			INNER JOIN [sys].[tables] [t] ON [ndx].[object_id]=[t].[object_id]")).ToHashSet();
+
+		var fkNames = (await cn.QueryAsync<string>("SELECT [name] FROM [sys].[foreign_keys]")).ToHashSet();
+
 		return new DatabaseMetadata()
 		{
 			Schemas = schemas,
 			TableNames = tables,
-			RowCounts = rowCounts
+			RowCounts = rowCounts,
+			IndexNames = indexNames,
+			ForeignKeyNames = fkNames
 		};
 	}
 }

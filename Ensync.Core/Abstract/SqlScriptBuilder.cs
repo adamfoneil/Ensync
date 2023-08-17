@@ -70,7 +70,11 @@ public abstract class SqlScriptBuilder
 
 	private IEnumerable<(string, DbObject?)> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child, bool debug)
 	{
-		var results = child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Drop(obj.Parent, obj.Child)).ToList();
+		var results = child.GetDependencies(schema)
+			.SelectMany(obj => syntax[obj.Child.Type].Drop(obj.Parent, obj.Child))
+			.Where(obj => TargetObjectExists(obj.Item2!))
+			.ToList();
+
 		var count = results.Count;
 		if (debug) results.Insert(0, ($"{LineCommentStart}drop dependencies of {child} ({count})", null));
 		return results;
@@ -79,16 +83,23 @@ public abstract class SqlScriptBuilder
 
 	private IEnumerable<(string, DbObject?)> CreateDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child, bool debug)
 	{
-		var results = child.GetDependencies(schema).SelectMany(obj => syntax[obj.Child.Type].Create(obj.Parent, obj.Child)).ToList();
+		var results = child.GetDependencies(schema)
+			.SelectMany(obj => syntax[obj.Child.Type].Create(obj.Parent, obj.Child))
+			.ToList();
+
 		var count = results.Count;
 		if (debug) results.Insert(0, ($"{LineCommentStart} create dependencies of {child} ({count})", null));
 		return results;
 	}
 
-    internal bool TargetObjectExists(DbObject dbObject)
-    {
-        throw new NotImplementedException();
-    }
+	internal bool TargetObjectExists(DbObject dbObject) => dbObject.Type switch
+	{
+		DbObjectType.Table => Metadata.TableNames.Contains(dbObject.Name),
+		DbObjectType.ForeignKey => Metadata.ForeignKeyNames.Contains(dbObject.Name),
+		DbObjectType.Index => Metadata.IndexNames.Contains(dbObject.Name),
+		_ => throw new NotImplementedException()
+	};
+    
 
     public class SqlStatements
 	{
