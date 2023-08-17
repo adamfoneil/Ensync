@@ -75,6 +75,7 @@ internal class Program
 						("connection.json", target.Target.ConnectionString),
 						("source.json", source.Schema),
 						("target.json", target.Schema),
+						("metadata.json", scriptBuilder.Metadata),
 						("statements.json", statements)
 					});
 					WriteColorLine("Created zip file test case", ConsoleColor.Green);

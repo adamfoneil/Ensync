@@ -1,4 +1,5 @@
 ﻿using Ensync.Core;
+using Ensync.Core.Abstract;
 using Ensync.Core.Extensions;
 using Ensync.SqlServer;
 using System.IO.Compression;
@@ -22,28 +23,23 @@ public class Embedded
 		using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName) ?? throw new Exception($"Resource not found: {resourceName}");
 		using var zipFile = new ZipArchive(stream, ZipArchiveMode.Read);
 
-		var source = GetSchema("source.json");
-		var target = GetSchema("target.json");
-		var connectionString = GetConnectionString();
+		var source = GetEntryData<Schema>("source.json");
+		var target = GetEntryData<Schema>("target.json");
+		var connectionString = GetEntryData<string>("connection.json");
+		var metadata = GetEntryData<DatabaseMetadata>("metadata.json");
 
 		var scriptBuilder = new SqlServerScriptBuilder(connectionString);
+		scriptBuilder.SetMetadata(metadata);
 		var script = await source.CompareAsync(target, scriptBuilder);
 		var statements = script.ToSqlStatements(scriptBuilder, true);
 
 		Assert.IsTrue(statements.SequenceEqual(shouldGenerateStatements));
 
-		Schema GetSchema(string entryName)
+		T GetEntryData<T>(string entryName)
 		{
 			var entry = zipFile!.GetEntry(entryName) ?? throw new Exception($"Entry not found: {entryName}");
 			var json = new StreamReader(entry.Open()).ReadToEnd();
-			return JsonSerializer.Deserialize<Schema>(json) ?? throw new Exception("Couldn't read json");
-		}
-
-		string GetConnectionString()
-		{
-			var entry = zipFile.GetEntry("connection.json") ?? throw new Exception("Entry connection.json not found");
-			var json = new StreamReader(entry.Open()).ReadToEnd();
-			return JsonSerializer.Deserialize<string>(json) ?? throw new Exception("Couldn't read connection string json");
+			return JsonSerializer.Deserialize<T>(json) ?? throw new Exception("Couldn't read json");
 		}
 	}
 }
