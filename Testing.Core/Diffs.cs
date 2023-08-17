@@ -60,6 +60,11 @@ public class Diffs
 		};
 
 		var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+		scriptBuilder.SetMetadata(new()
+		{
+			TableNames = new[] { "dbo.Parent"}.ToHashSet(),
+			ForeignKeyNames = new[] { "FK_Child_Parent" }.ToHashSet()
+		});
 		var statements = scriptBuilder.GetScript(ScriptActionType.Drop, schema, null, parent);
 		Assert.IsTrue(statements.Select(item => item.Item1).SequenceEqual(new[]
 		{
@@ -119,6 +124,10 @@ public class Diffs
 		var targetSchema = new Schema() { Tables = new Table[] { targetTable } };
 
 		var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+		scriptBuilder.SetMetadata(new()
+		{
+			TableNames = new[] { "dbo.Whatever" }.ToHashSet()
+		});
 		var script = await sourceSchema.CompareAsync(targetSchema, scriptBuilder);
 		Assert.IsTrue(script.ToSqlStatements(scriptBuilder).SequenceEqual(new[]
 		{
@@ -153,6 +162,10 @@ public class Diffs
 		var targetTable = new Table() { Name = "dbo.Whatever", Columns = targetColumns, Indexes = new Index[] { index } };
 
 		var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+		scriptBuilder.SetMetadata(new()
+		{
+			IndexNames = new[] { "IX_Whatever_Column1" }.ToHashSet()
+		});
 		var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
 		var statements = script.ToSqlStatements(scriptBuilder);
 		Assert.IsTrue(statements.SequenceEqual(new[]
@@ -242,6 +255,10 @@ public class Diffs
 		};
 
 		var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+		scriptBuilder.SetMetadata(new DatabaseMetadata()
+		{
+			IndexNames = new[] { "IX_Whatever_Column1" }.ToHashSet()
+		});
 		var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
 		Assert.IsTrue(script.ToSqlStatements(scriptBuilder).SequenceEqual(new[]
 		{
@@ -302,6 +319,10 @@ public class Diffs
 		};
 
 		var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+		scriptBuilder.SetMetadata(new()
+		{
+			IndexNames = new[] { "IX_Hello" }.ToHashSet()
+		});
 		var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
 		Assert.IsTrue(script.ToSqlStatements(scriptBuilder).SequenceEqual(new[]
 		{
@@ -317,6 +338,10 @@ public class Diffs
 		var target = EmployeeSchema.Instance;
 
 		var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+		scriptBuilder.SetMetadata(new()
+		{
+			ForeignKeyNames = new[] { "FK_Employee_EmployeeType" }.ToHashSet()
+		});
 		var script = await source.CompareAsync(target, scriptBuilder);
 		Assert.IsTrue(script.ToSqlStatements(scriptBuilder).SequenceEqual(new[]
 		{

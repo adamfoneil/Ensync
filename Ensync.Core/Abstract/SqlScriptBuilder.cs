@@ -14,6 +14,8 @@ public class DatabaseMetadata
 		var rows = GetRowCount(tableName);
 		return (rows > 0) ? $"Caution! {rows:n0} rows will be deleted" : default;
 	}
+
+	public bool IsInitialized() => Schemas.Any() || TableNames.Any() || ForeignKeyNames.Any() || IndexNames.Any();
 }
 
 public enum StatementType
@@ -41,10 +43,13 @@ public abstract class SqlScriptBuilder
 
 	public async Task InspectTargetDatabaseAsync()
 	{
+		if (Metadata.IsInitialized()) return;
 		Metadata = await GetMetadataAsync();
 	}
 
-	public IEnumerable<(string, DbObject?)> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child, bool debug = false) => actionType switch
+    public void SetMetadata(DatabaseMetadata databaseMetadata) => Metadata = databaseMetadata;
+
+    public IEnumerable<(string, DbObject?)> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child, bool debug = false) => actionType switch
 	{
 		ScriptActionType.Create =>
 			Syntax[child.Type].Create.Invoke(parent, child),
