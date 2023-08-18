@@ -141,7 +141,7 @@ public class Schema
 		bool ReferencedTableCreatedOrExists(ForeignKey key)
 		{
 			if (results.Any(sa => sa.Object.Equals(key.ReferencedTable))) return true;
-			if (scriptBuilder.Metadata.TableNames.Contains(key.ReferencedTable.Name)) return true;
+			if (scriptBuilder.Metadata.TableNames.Contains(key.ReferencedTable.Name.ToLower())) return true;
 
 			return false;
 		}
