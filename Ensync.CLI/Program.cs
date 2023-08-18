@@ -240,6 +240,8 @@ internal class Program
 
     private static bool BuildProject(string basePath)
     {
+		Console.WriteLine("Building project...");
+
 		var psi = new ProcessStartInfo()
 		{
 			FileName = "dotnet",
@@ -253,9 +255,7 @@ internal class Program
 		var process = Process.Start(psi) ?? throw new Exception($"Couldn't start {psi.FileName}");
 		var output = process.StandardOutput.ReadToEnd();
 		var errors = process.StandardError.ReadToEnd();
-		process.WaitForExit();
-
-		Console.WriteLine(output);
+		process.WaitForExit();		
 
 		if (!string.IsNullOrWhiteSpace(errors))
 		{
