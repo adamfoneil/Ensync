@@ -47,7 +47,14 @@ internal class Program
 			var scriptBuilder = new SqlServerScriptBuilder(target.Target.ConnectionString);
 			var script = await source.Schema.CompareAsync(target.Schema, scriptBuilder, o.Debug);
 
-			var statements = script.Except(config.Ignore.ToScriptActions()).ToSqlStatements(scriptBuilder, true).ToArray();
+			var executeScript = script.Except(config.Ignore.ToScriptActions());
+			var destructive = executeScript.Where(a => a.IsDestructive);
+			foreach (var action in destructive)
+			{
+				// todo: prompt in some way
+			}
+
+            var statements = executeScript.ToSqlStatements(scriptBuilder, true).ToArray();
 
 			switch (o.Action)
 			{
