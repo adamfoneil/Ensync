@@ -26,12 +26,12 @@ public class Schema
 
 		List<ScriptAction> results = new();
 
-        AlterColumns(results, Tables, targetSchema, scriptBuilder, debug);
-        // AlterIndexes
-        // AlterChecks
-        // AlterForeignKeys
+		AlterColumns(results, Tables, targetSchema, scriptBuilder, debug);
+		// AlterIndexes
+		// AlterChecks
+		// AlterForeignKeys
 
-        AddTables(results, Tables, targetSchema, scriptBuilder, debug);
+		AddTables(results, Tables, targetSchema, scriptBuilder, debug);
 		AddColumns(results, Tables, targetSchema, scriptBuilder, debug);
 		AddIndexes(results, Tables, targetSchema, scriptBuilder, debug);
 		// AddChecks
