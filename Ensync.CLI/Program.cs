@@ -7,6 +7,7 @@ using Ensync.Core.Models;
 using Ensync.Dotnet7;
 using Ensync.SqlServer;
 using Microsoft.Data.SqlClient;
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Reflection;
 using System.Text.Json;
@@ -84,7 +85,7 @@ internal class Program
 		});
 	}
 
-	private static void WriteZipFile(string path, string zipFilename, (string, object)[] contents)
+    private static void WriteZipFile(string path, string zipFilename, (string, object)[] contents)
 	{
 		var zipPath = Path.Combine(path, zipFilename);
 		if (File.Exists(zipPath)) File.Delete(zipPath);
@@ -217,6 +218,11 @@ internal class Program
 		if (options.UseAssemblySource)
 		{
 			var assemblyFile = PathHelper.Resolve(basePath, config.AssemblyPath);
+			if (AssemblyOutdated(assemblyFile, basePath))
+			{
+				if (!BuildProject(basePath)) throw new Exception("Build failed");
+			}
+
 			var assemblyInspector = new AssemblySchemaInspector(assemblyFile);
 			return ($"assembly {Path.GetFileName(assemblyFile)}", await assemblyInspector.GetSchemaAsync());
 		}
@@ -225,7 +231,42 @@ internal class Program
 		return (dbSchema.Description, dbSchema.Schema);
 	}
 
-	private static void PreviewChanges(string[] statements)
+    private static bool BuildProject(string basePath)
+    {
+		var psi = new ProcessStartInfo()
+		{
+			FileName = "dotnet",
+			Arguments = $"build \"{basePath}\" --configuration Debug",
+			RedirectStandardOutput = true,
+			RedirectStandardError = true,
+			UseShellExecute = false,
+			CreateNoWindow = true
+		};
+
+		var process = Process.Start(psi) ?? throw new Exception($"Couldn't start {psi.FileName}");
+		var output = process.StandardOutput.ReadToEnd();
+		var errors = process.StandardError.ReadToEnd();
+		process.WaitForExit();
+
+		Console.WriteLine(output);
+
+		if (!string.IsNullOrWhiteSpace(errors))
+		{
+			WriteColorLine(errors, ConsoleColor.Red);
+			return false;
+		}
+
+		return true;
+    }
+
+    private static bool AssemblyOutdated(string assemblyFile, string basePath)
+    {
+		var buildDate = new FileInfo(assemblyFile).LastWriteTimeUtc;
+		var sourceDate = Directory.GetFiles(basePath, "*.cs", SearchOption.AllDirectories).Select(fi => new FileInfo(fi)).Max(fi => fi.LastWriteTimeUtc);
+		return sourceDate > buildDate;
+    }
+
+    private static void PreviewChanges(string[] statements)
 	{
 		var color = Console.ForegroundColor;
 		try
