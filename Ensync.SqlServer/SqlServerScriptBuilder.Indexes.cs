@@ -29,9 +29,17 @@ public partial class SqlServerScriptBuilder
 		yield return (statement, index);
 	}
 
-	private IEnumerable<string> AlterIndex(DbObject? parent, DbObject child)
+	private IEnumerable<(string, DbObject?)> AlterIndex(DbObject? parent, DbObject child)
 	{
-		throw new NotImplementedException();
+		foreach (var cmd in DropIndex(parent, child))
+		{
+			yield return cmd;
+		}
+
+		foreach (var cmd in CreateIndex(parent, child))
+		{
+			yield return cmd;
+		}	
 	}
 
 	private IEnumerable<(string, DbObject?)> DropIndex(DbObject? parent, DbObject child)

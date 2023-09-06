@@ -27,7 +27,7 @@ public class Schema
 		List<ScriptAction> results = new();
 
 		AlterColumns(results, Tables, targetSchema, scriptBuilder, debug);
-		// AlterIndexes
+		AlterIndexes(results, Tables, targetSchema, scriptBuilder, debug);
 		// AlterChecks
 		// AlterForeignKeys
 
@@ -44,6 +44,27 @@ public class Schema
 
 		return results;
 	}
+
+	private static void AlterIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
+	{
+		var alteredIndexes = GetCommonTables(sourceTables, targetSchema.Tables)
+			.SelectMany(GetCommonIndexes)
+			.Where(IsAltered);
+
+		results.AddRange(alteredIndexes.Select(ndxPair => new ScriptAction(ScriptActionType.Alter, ndxPair.Source)
+		{
+			Statements = scriptBuilder.GetScript(ScriptActionType.Alter, targetSchema, ndxPair.Source.Parent, ndxPair.Source, debug)
+		}));
+	}
+
+	private static bool IsAltered((Index Source, Index Target) indexPair) => indexPair.Source.IsAltered(indexPair.Target).Result;
+
+	private static IEnumerable<(Index Source, Index Target)> GetCommonIndexes((Table Source, Table Target) tablePair) =>
+		tablePair.Source.Indexes.Join(
+			tablePair.Target.Indexes,
+			ndx => ndx, ndx => ndx,
+			(sourceIndex, targetIndex) => (sourceIndex, targetIndex));
+	
 
 	private static void DropForeignKeys(List<ScriptAction> results, IEnumerable<ForeignKey> foreignKeys, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{

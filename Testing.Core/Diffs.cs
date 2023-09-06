@@ -349,4 +349,47 @@ public class Diffs
 		}));
 
 	}
+
+	[TestMethod]
+	public async Task AddPKColumn()
+	{
+		var sourceTable = new Table()
+		{
+			Name = "dbo.Whatever",
+			Indexes = new Index[]
+			{
+				new() { Name = "PK_Whatever", IndexType = IndexType.PrimaryKey, Columns = new Index.Column[]
+				{
+					new() { Name = "Column1" },
+					new() { Name = "Column2" }
+				}}
+			}
+		};
+
+		var targetTable = new Table()
+		{
+			Name = "dbo.Whatever",
+			Indexes = new Index[]
+			{
+				new() { Name = "PK_Whatever", IndexType = IndexType.PrimaryKey, Columns = new Index.Column[]
+				{
+					new() { Name = "Column1" }					
+				}}
+			}
+		};
+
+		var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
+		scriptBuilder.SetMetadata(new DatabaseMetadata()
+		{
+			TableNames = new[] { "dbo.Whatever"}.ToHashSet(),
+			IndexNames = new[] { "PK_Hello" }.ToHashSet()
+		});
+
+		var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
+		Assert.IsTrue(script.ToSqlStatements(scriptBuilder).SequenceEqual(new[]
+		{
+			"ALTER TABLE [dbo].[Whatever] DROP CONSTRAINT [PK_Whatever]",
+			"ALTER TABLE [dbo].[Whatever] ADD CONSTRAINT [PK_Whatever] PRIMARY KEY ([Column1] ASC, [Column2] ASC)"
+		}));
+	}
 }

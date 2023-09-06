@@ -24,6 +24,26 @@ public class Index : DbObject
 	public int InternalId { get; init; }
 	public bool IsClustered { get; init; }
 
+	public override (bool Result, string? Message) IsAltered(DbObject compareWith)
+	{
+		if (compareWith is Index ndx)
+		{
+			if (IndexType != ndx.IndexType) return (true, $"Index type changed from {ndx.IndexType} to {IndexType}");
+
+			var removedColumns = Columns.Select(col => col.Name).Except(ndx.Columns.Select(col => col.Name));
+			if (removedColumns.Any()) return (true, $"Removed columns {string.Join(", ", removedColumns)}");
+
+			var addedColumns = ndx.Columns.Select(col => col.Name).Except(Columns.Select(col => col.Name));
+			if (addedColumns.Any()) return (true, $"Added columns {string.Join(", ", addedColumns)}");
+
+			// todo: direction and order checks
+		}
+
+		return (false, default);
+
+		
+	}
+
 	public class Column
 	{
 		public required string Name { get; init; }

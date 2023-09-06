@@ -19,7 +19,7 @@ public class Column : DbObject
 		if (compareWith is Column column)
 		{
 			if (!DataType.Equals(column.DataType)) return (true, $"Data type changed from {column.DataType} to {DataType}");
-			if (IsNullable != column.IsNullable) return (true, $"Nullability changed from {column.IsNullable} to {column.IsNullable}");
+			if (IsNullable != column.IsNullable) return (true, $"Nullability changed from {column.IsNullable} to {IsNullable}");
 			if (DefaultValue != column.DefaultValue) return (true, $"Default value changed from {column.DefaultValue} to {DefaultValue}");
 		}
 

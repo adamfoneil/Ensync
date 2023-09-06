@@ -33,7 +33,7 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
 		{
 			Definition = IndexDefinition,
 			Create = CreateIndex,
-			Alter = (parent, child) => throw new NotImplementedException(),
+			Alter = AlterIndex,
 			Drop = DropIndex
 		},
 		[DbObjectType.ForeignKey] = new()
