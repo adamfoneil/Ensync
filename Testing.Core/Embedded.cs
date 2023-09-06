@@ -25,6 +25,7 @@ public class Embedded
 		"ALTER TABLE [dbo].[WidgetType] ADD CONSTRAINT [U_WidgetType_Name_ParentId] UNIQUE ([Name] ASC, [ParentId] ASC)",
 		"ALTER TABLE [dbo].[Widget] DROP CONSTRAINT [FK_Widget_TypeId]",
 		"ALTER TABLE [dbo].[WidgetType] DROP CONSTRAINT [U_WidgetType_Name]",
+		// this next statement is what's currently missing
 		"ALTER TABLE [dbo].[Widget] ADD CONSTRAINT [FK_Widget_TypeId] FOREIGN KEY ([TypeId]) REFERENCES [dbo].[WidgetType] ([Id])"
 	});
 	
