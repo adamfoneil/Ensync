@@ -77,7 +77,9 @@ internal class Program
 				case Action.Ignore:
 					break;
 
-				case Action.CaptureTestCase:					
+				case Action.CaptureTestCase:
+					SetFKParents(source.Schema);
+					SetFKParents(target.Schema);
 					WriteZipFile(config.BasePath, "TestCase.zip", new(string, object)[]
 					{
 						("connection.json", target.Target.ConnectionString),
@@ -90,6 +92,11 @@ internal class Program
 					break;
 			}
 		});
+
+		void SetFKParents(Schema schema)
+		{
+			foreach (var fk in schema.ForeignKeys) fk.ParentName = fk.Parent?.Name;
+		}
 	}
 
     private static void WriteZipFile(string path, string zipFilename, (string, object)[] contents)

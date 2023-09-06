@@ -19,6 +19,10 @@ public abstract class DbObject
 	public string Name { get; init; } = default!;
 	[JsonIgnore]
 	public DbObject? Parent { get; set; }
+	/// <summary>
+	/// this is for deserialization purposes within embedded test cases
+	/// </summary>
+	public string? ParentName { get; set; }
 
 	public virtual (bool Result, string? Message) IsAltered(DbObject compareWith) => (false, null);
 
