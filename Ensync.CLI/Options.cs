@@ -23,7 +23,11 @@ public enum Action
 	/// <summary>
 	/// creates a zip file of source and dest schemas along with the generated statements for later inspection
 	/// </summary>
-	CaptureTestCase
+	CaptureTestCase,
+	/// <summary>
+	/// save the source and dest models as markdown along with the SQL script for manual comparison and debugging purposes
+	/// </summary>
+	Debug
 }
 
 internal class Options

@@ -90,6 +90,13 @@ internal class Program
 					});
 					WriteColorLine("Created zip file test case", ConsoleColor.Green);
 					break;
+
+				case Action.Debug:
+					SaveSchemaMarkdown(config.BasePath, "source.md", source.Schema);
+					SaveSchemaMarkdown(config.BasePath, "target.md", target.Schema);
+					CreateSqlScript(config.BasePath, statements);
+					WriteColorLine("Created source.md, target.md, and script.sql", ConsoleColor.Green);
+					break;
 			}
 		});
 
@@ -97,6 +104,44 @@ internal class Program
 		{
 			foreach (var fk in schema.ForeignKeys) fk.ParentName = fk.Parent?.Name;
 		}
+	}
+
+	private static void SaveSchemaMarkdown(string basePath, string fileName, Schema schema)
+	{
+		var outputFile = Path.Combine(basePath, fileName);
+		if (File.Exists(outputFile)) File.Delete(outputFile);
+
+		using var output = File.CreateText(outputFile);
+
+		output.WriteLine("# Tables:");
+		foreach (var tbl in  schema.Tables.OrderBy(tbl => tbl.Name))
+		{
+			output.WriteLine($"## {tbl.Name}");
+			output.WriteLine("###  Columns:");
+			foreach (var col in tbl.Columns.OrderBy(col => col.Name))
+			{
+				output.WriteLine($"- {col.Name} {col.DataType} {(col.IsNullable ? "NULL" : "NOT NULL")}");
+			}
+
+			output.WriteLine("### Indexes:");
+			foreach (var ndx in tbl.Indexes.OrderBy(ndx => ndx.Name))
+			{
+				output.WriteLine($"- {ndx.Name}: {string.Join(", ", ndx.Columns.OrderBy(col => col.Name).Select(col => col.Name))}");
+			}
+
+			output.WriteLine();
+		}
+
+		output.WriteLine();
+		output.WriteLine("# Foreign Keys:");
+		foreach (var fk in schema.ForeignKeys)
+		{
+			output.WriteLine($"- {fk.Name}: {string.Join(", ", fk.Columns
+				.OrderBy(col => col.ReferencingName)
+				.Select(col => $"{fk.Parent!.Name}.{col.ReferencingName} = {fk.ReferencedTable.Name}.{col.ReferencedName}"))}");
+		}
+
+		output.Close();
 	}
 
 	private static void WriteZipFile(string path, string zipFilename, (string, object)[] contents)
@@ -122,7 +167,16 @@ internal class Program
 
 	private static void CreateSqlScript(string basePath, string[] statements)
 	{
-		throw new NotImplementedException();
+		var outputFile = Path.Combine(basePath, "script.sql");
+		if (File.Exists(outputFile)) File.Delete(outputFile);
+
+		using var output = File.CreateText(outputFile);
+		foreach (var statement in statements)
+		{
+			output.WriteLine(statement);
+			output.WriteLine();
+		}
+		output.Close();
 	}
 
 	private static Configuration DefaultConfiguration(string basePath) => new Configuration()
