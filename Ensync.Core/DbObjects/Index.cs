@@ -40,8 +40,6 @@ public class Index : DbObject
 		}
 
 		return (false, default);
-
-
 	}
 
 	public class Column

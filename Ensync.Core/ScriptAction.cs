@@ -1,5 +1,6 @@
 ﻿using Ensync.Core.Abstract;
 using Ensync.Core.DbObjects;
+using System.Diagnostics;
 
 namespace Ensync.Core;
 
@@ -10,6 +11,7 @@ public enum ScriptActionType
 	Drop
 }
 
+[DebuggerDisplay("{Action}: {Object}")]
 public class ScriptAction
 {
 	public ScriptAction(ScriptActionType action, DbObject @object)
