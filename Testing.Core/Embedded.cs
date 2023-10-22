@@ -22,11 +22,8 @@ public class Embedded
 	public async Task ShouldRebuildFK() => await TestEmbeddedAsync("Testing.Core.EmbeddedCases.ShouldRebuildFK.zip", new[]
 	{
 		"ALTER TABLE [dbo].[WidgetType] ADD [ParentId] int NOT NULL",
-		"ALTER TABLE [dbo].[WidgetType] ADD CONSTRAINT [U_WidgetType_Name_ParentId] UNIQUE ([Name] ASC, [ParentId] ASC)",
-		"ALTER TABLE [dbo].[Widget] DROP CONSTRAINT [FK_Widget_TypeId]",
-		"ALTER TABLE [dbo].[WidgetType] DROP CONSTRAINT [U_WidgetType_Name]",
-		// this next statement is what's currently missing
-		"ALTER TABLE [dbo].[Widget] ADD CONSTRAINT [FK_Widget_TypeId] FOREIGN KEY ([TypeId]) REFERENCES [dbo].[WidgetType] ([Id])"
+		"ALTER TABLE [dbo].[WidgetType] ADD CONSTRAINT [U_WidgetType_Name_ParentId] UNIQUE ([Name] ASC, [ParentId] ASC)",		
+		"ALTER TABLE [dbo].[WidgetType] DROP CONSTRAINT [U_WidgetType_Name]"
 	});
 
 	private async Task TestEmbeddedAsync(string resourceName, IEnumerable<string> shouldGenerateStatements)

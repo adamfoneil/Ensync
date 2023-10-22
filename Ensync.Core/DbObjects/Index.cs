@@ -51,7 +51,9 @@ public class Index : DbObject
 
 	public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema) =>
 		(IndexType == IndexType.PrimaryKey || IndexType == IndexType.UniqueConstraint) ?
-			schema.ForeignKeys.Where(fkInfo => fkInfo.ReferencedTable.Equals(Parent))
+			schema.ForeignKeys.Where(
+				fkInfo => fkInfo.ReferencedTable.Equals(Parent) && 
+				Columns.Select(col => col.Name).Intersect(fkInfo.Columns.Select(fkCol => fkCol.ReferencedName)).Any())
 				.Select(fkInfo => ((DbObject?)fkInfo.Parent, (DbObject)fkInfo)) :
 			Enumerable.Empty<(DbObject?, DbObject)>();
 }
