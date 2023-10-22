@@ -21,10 +21,10 @@ internal class Program
 	const string IgnoreFilename = "ensync.ignore.json";
 
 	static async Task Main(string[] args)
-	{		
+	{
 		await Parser.Default.ParseArguments<Options>(args).WithParsedAsync(async o =>
 		{
-			WriteColorLine($"Ensync version {GetVersion()}", ConsoleColor.Cyan);			
+			WriteColorLine($"Ensync version {GetVersion()}", ConsoleColor.Cyan);
 
 			var config = FindConfig(o.ConfigPath);
 
@@ -36,7 +36,7 @@ internal class Program
 
 			if (o.Merge) o.ActionName = "Merge";
 			if (o.Script) o.ActionName = "Script";
-			
+
 			var targets = config.Data.DatabaseTargets.ToDictionary(item => item.Name);
 
 			var source = await GetSourceSchemaAsync(o, config.BasePath, config.Data, targets);
@@ -54,7 +54,7 @@ internal class Program
 				// todo: prompt in some way
 			}
 
-            var statements = executeScript.ToSqlStatements(scriptBuilder, true).ToArray();
+			var statements = executeScript.ToSqlStatements(scriptBuilder, true).ToArray();
 
 			switch (o.Action)
 			{
@@ -63,7 +63,7 @@ internal class Program
 					if (statements.Any())
 					{
 						WriteColorLine("Use --merge to apply changes to database. Use --debug to show script comments", ConsoleColor.Cyan);
-					}					
+					}
 					break;
 
 				case Action.Merge:
@@ -80,7 +80,7 @@ internal class Program
 				case Action.CaptureTestCase:
 					SetFKParents(source.Schema);
 					SetFKParents(target.Schema);
-					WriteZipFile(config.BasePath, "TestCase.zip", new(string, object)[]
+					WriteZipFile(config.BasePath, "TestCase.zip", new (string, object)[]
 					{
 						("connection.json", target.Target.ConnectionString),
 						("source.json", source.Schema),
@@ -99,7 +99,7 @@ internal class Program
 		}
 	}
 
-    private static void WriteZipFile(string path, string zipFilename, (string, object)[] contents)
+	private static void WriteZipFile(string path, string zipFilename, (string, object)[] contents)
 	{
 		var zipPath = Path.Combine(path, zipFilename);
 		if (File.Exists(zipPath)) File.Delete(zipPath);
@@ -115,7 +115,7 @@ internal class Program
 			{
 				WriteIndented = true
 			});
-		}				
+		}
 	}
 
 	private static string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "<unkown version>";
@@ -135,7 +135,7 @@ internal class Program
 	{
 		Console.WriteLine("Creating empty configuration...");
 		var outputFile = Path.Combine(basePath, ConfigFilename);
-		
+
 		if (!File.Exists(outputFile))
 		{
 			var config = DefaultConfiguration(basePath);
@@ -146,14 +146,14 @@ internal class Program
 			});
 
 			File.WriteAllText(outputFile, json);
-		}		
+		}
 
 		outputFile = Path.Combine(basePath, IgnoreFilename);
 		if (!File.Exists(outputFile))
 		{
 			var ignore = new Ignore()
 			{
-				Actions = new ScriptActionKey[] { new(ScriptActionType.Create, "dbo.Sample", DbObjectType.Table ) }
+				Actions = new ScriptActionKey[] { new(ScriptActionType.Create, "dbo.Sample", DbObjectType.Table) }
 			};
 
 			var json = JsonSerializer.Serialize(ignore, new JsonSerializerOptions()
@@ -245,8 +245,8 @@ internal class Program
 		return (dbSchema.Description, dbSchema.Schema);
 	}
 
-    private static bool BuildProject(string basePath)
-    {
+	private static bool BuildProject(string basePath)
+	{
 		Console.WriteLine("Building project...");
 
 		var psi = new ProcessStartInfo()
@@ -262,7 +262,7 @@ internal class Program
 		var process = Process.Start(psi) ?? throw new Exception($"Couldn't start {psi.FileName}");
 		var output = process.StandardOutput.ReadToEnd();
 		var errors = process.StandardError.ReadToEnd();
-		process.WaitForExit();		
+		process.WaitForExit();
 
 		if (!string.IsNullOrWhiteSpace(errors))
 		{
@@ -271,16 +271,16 @@ internal class Program
 		}
 
 		return true;
-    }
+	}
 
-    private static bool AssemblyOutdated(string assemblyFile, string basePath)
-    {
+	private static bool AssemblyOutdated(string assemblyFile, string basePath)
+	{
 		var buildDate = new FileInfo(assemblyFile).LastWriteTimeUtc;
 		var sourceDate = Directory.GetFiles(basePath, "*.cs", SearchOption.AllDirectories).Select(fi => new FileInfo(fi)).Max(fi => fi.LastWriteTimeUtc);
 		return sourceDate > buildDate;
-    }
+	}
 
-    private static void PreviewChanges(string[] statements)
+	private static void PreviewChanges(string[] statements)
 	{
 		var color = Console.ForegroundColor;
 		try
@@ -370,7 +370,7 @@ internal class Program
 			Console.Write($"Creating database {ConnectionString.Database(connectionString)}...");
 			if (TryCreateDbIfNotExists(connectionString))
 			{
-				Thread.Sleep(1000);				
+				Thread.Sleep(1000);
 				return;
 			}
 			throw;

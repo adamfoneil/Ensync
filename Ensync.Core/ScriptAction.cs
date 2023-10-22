@@ -18,7 +18,7 @@ public class ScriptAction
 		Object = @object;
 	}
 
-    public ScriptActionType Action { get; init; }
+	public ScriptActionType Action { get; init; }
 	public DbObject Object { get; init; }
 	/// <summary>
 	/// the AffectedObject is usually the Object, but it will be different when the Statement

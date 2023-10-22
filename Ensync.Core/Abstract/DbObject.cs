@@ -40,6 +40,6 @@ public abstract class DbObject
 	public override int GetHashCode() => $"{Type}.{Name.ToLower()}".GetHashCode();
 
 	public override string ToString() => $"{Type} {Name}";
-	
+
 	public virtual IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema) => Enumerable.Empty<(DbObject? Parent, DbObject Child)>();
 }

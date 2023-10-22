@@ -47,9 +47,9 @@ public abstract class SqlScriptBuilder
 		Metadata = await GetMetadataAsync();
 	}
 
-    public void SetMetadata(DatabaseMetadata databaseMetadata) => Metadata = databaseMetadata;
+	public void SetMetadata(DatabaseMetadata databaseMetadata) => Metadata = databaseMetadata;
 
-    public IEnumerable<(string, DbObject?)> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child, bool debug = false) => actionType switch
+	public IEnumerable<(string, DbObject?)> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child, bool debug = false) => actionType switch
 	{
 		ScriptActionType.Create =>
 			Syntax[child.Type].Create.Invoke(parent, child),
@@ -63,7 +63,7 @@ public abstract class SqlScriptBuilder
 		ScriptActionType.Drop =>
 			DropDependencies(Syntax, schema, child, debug)
 			.Concat(Comment(debug, $"drop {child}"))
-			.Concat(Syntax[child.Type].Drop.Invoke(parent, child)),			
+			.Concat(Syntax[child.Type].Drop.Invoke(parent, child)),
 
 		_ => throw new NotSupportedException()
 	};
@@ -84,7 +84,7 @@ public abstract class SqlScriptBuilder
 		if (debug) results.Insert(0, ($"{LineCommentStart}drop dependencies of {child} ({count})", null));
 		return results;
 	}
-		
+
 
 	private IEnumerable<(string, DbObject?)> CreateDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child, bool debug)
 	{
@@ -104,9 +104,9 @@ public abstract class SqlScriptBuilder
 		DbObjectType.Index => Metadata.IndexNames.Contains(dbObject.Name),
 		_ => throw new NotImplementedException()
 	};
-    
 
-    public class SqlStatements
+
+	public class SqlStatements
 	{
 		public Func<DbObject, string>? Definition { get; init; }
 		public required Func<DbObject?, DbObject, IEnumerable<(string, DbObject?)>> Create { get; init; }

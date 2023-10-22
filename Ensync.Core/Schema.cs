@@ -64,16 +64,16 @@ public class Schema
 			tablePair.Target.Indexes,
 			ndx => ndx, ndx => ndx,
 			(sourceIndex, targetIndex) => (sourceIndex, targetIndex));
-	
+
 
 	private static void DropForeignKeys(List<ScriptAction> results, IEnumerable<ForeignKey> foreignKeys, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
 		results.AddRange(targetSchema.ForeignKeys.Except(foreignKeys)
 			.Where(scriptBuilder.TargetObjectExists)
 			.Select(fk => new ScriptAction(ScriptActionType.Drop, fk)
-		{
-			Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, fk.Parent, fk)
-		}));
+			{
+				Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, fk.Parent, fk)
+			}));
 	}
 
 	private static void AlterColumns(List<ScriptAction> results, IEnumerable<Table> tables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
@@ -181,11 +181,11 @@ public class Schema
 		results.AddRange(targetSchema.Tables.Except(sourceTables)
 			.Where(scriptBuilder.TargetObjectExists)
 			.Select(tbl => new ScriptAction(ScriptActionType.Drop, tbl)
-		{
-			IsDestructive = scriptBuilder.Metadata.GetRowCount(tbl.Name) > 0,
-			Message = scriptBuilder.Metadata.GetDropWarning(tbl.Name),
-			Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, null, tbl, debug)
-		}));
+			{
+				IsDestructive = scriptBuilder.Metadata.GetRowCount(tbl.Name) > 0,
+				Message = scriptBuilder.Metadata.GetDropWarning(tbl.Name),
+				Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, null, tbl, debug)
+			}));
 	}
 
 	private static void AddColumns(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)

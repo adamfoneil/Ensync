@@ -71,5 +71,5 @@ public partial class SqlServerScriptBuilder
 			(parts.Length == 1) ? "dbo" :
 			(parts.Length > 1) ? parts[0] :
 			throw new Exception("How did you get here?");
-	}    
+	}
 }

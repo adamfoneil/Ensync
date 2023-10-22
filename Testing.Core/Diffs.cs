@@ -62,7 +62,7 @@ public class Diffs
 		var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
 		scriptBuilder.SetMetadata(new()
 		{
-			TableNames = new[] { "dbo.Parent"}.ToHashSet(),
+			TableNames = new[] { "dbo.Parent" }.ToHashSet(),
 			ForeignKeyNames = new[] { "FK_Child_Parent" }.ToHashSet()
 		});
 		var statements = scriptBuilder.GetScript(ScriptActionType.Drop, schema, null, parent);
@@ -373,7 +373,7 @@ public class Diffs
 			{
 				new() { Name = "PK_Whatever", IndexType = IndexType.PrimaryKey, Columns = new Index.Column[]
 				{
-					new() { Name = "Column1" }					
+					new() { Name = "Column1" }
 				}}
 			}
 		};
@@ -381,7 +381,7 @@ public class Diffs
 		var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
 		scriptBuilder.SetMetadata(new DatabaseMetadata()
 		{
-			TableNames = new[] { "dbo.Whatever"}.ToHashSet(),
+			TableNames = new[] { "dbo.Whatever" }.ToHashSet(),
 			IndexNames = new[] { "PK_Hello" }.ToHashSet()
 		});
 

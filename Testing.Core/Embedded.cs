@@ -15,7 +15,7 @@ public class Embedded
 	public async Task UnexpectedUniqueDrop() => await TestEmbeddedAsync("Testing.Core.EmbeddedCases.UnexpectedUniqueDrop.zip", new[]
 	{
 		"ALTER TABLE [dbo].[WidgetType] ALTER COLUMN [Name] nvarchar(50) NOT NULL",
-		"ALTER TABLE [dbo].[WidgetType] ADD CONSTRAINT [U_WidgetType_Name] UNIQUE ([Name] ASC)"		
+		"ALTER TABLE [dbo].[WidgetType] ADD CONSTRAINT [U_WidgetType_Name] UNIQUE ([Name] ASC)"
 	});
 
 	[TestMethod]
@@ -28,7 +28,7 @@ public class Embedded
 		// this next statement is what's currently missing
 		"ALTER TABLE [dbo].[Widget] ADD CONSTRAINT [FK_Widget_TypeId] FOREIGN KEY ([TypeId]) REFERENCES [dbo].[WidgetType] ([Id])"
 	});
-	
+
 	private async Task TestEmbeddedAsync(string resourceName, IEnumerable<string> shouldGenerateStatements)
 	{
 		using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName) ?? throw new Exception($"Resource not found: {resourceName}");

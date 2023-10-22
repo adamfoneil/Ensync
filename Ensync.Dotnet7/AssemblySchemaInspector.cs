@@ -32,7 +32,7 @@ public class AssemblySchemaInspector : SchemaInspector
 			_dependencyContext ??= LoadDependencyContext(depsFile) ?? throw new Exception("Couldn't load dependency context");
 			AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
 		}
-		
+
 		_assembly = Assembly.LoadFile(fileName);
 		TypeFilter = (type) => true;
 	}

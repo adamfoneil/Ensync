@@ -39,7 +39,7 @@ public partial class SqlServerScriptBuilder
 		foreach (var cmd in CreateIndex(parent, child))
 		{
 			yield return cmd;
-		}	
+		}
 	}
 
 	private IEnumerable<(string, DbObject?)> DropIndex(DbObject? parent, DbObject child)
