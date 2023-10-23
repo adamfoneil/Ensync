@@ -9,6 +9,20 @@
     <ToolCommandName>ensync</ToolCommandName>
 	<PackageOutputPath>./nupkg</PackageOutputPath>
 	<AssemblyName>ensync</AssemblyName>
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<IncludeSymbols>True</IncludeSymbols>
+	<PackageId>AO.Ensync</PackageId>
+	<Title>Entity Sync to SQL Server</Title>
+	<Version>1.0.0-alpha</Version>
+	<Authors>Adam O'Neil</Authors>
+	<Company>Adam O'Neil</Company>
+	<Description>Code-first entity development without migrations</Description>
+	<Copyright>Copyright (c) 2023 Adam O'Neil</Copyright>
+	<PackageProjectUrl>https://github.com/adamfoneil/Ensync</PackageProjectUrl>
+	<RepositoryUrl>https://github.com/adamfoneil/Ensync</RepositoryUrl>
+	<PackageTags>code-first; diff-merge sql</PackageTags>
+	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
