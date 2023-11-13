@@ -34,7 +34,7 @@ public class AssemblySchemaInspector : SchemaInspector
 		}
 
 		_assembly = Assembly.LoadFile(fileName);
-		TypeFilter = (type) => true;
+		TypeFilter = (type) => !type.IsAbstract && type.IsPublic;
 	}
 
 	private Assembly? CurrentDomain_AssemblyResolve(object? sender, ResolveEventArgs args)
@@ -87,7 +87,7 @@ public class AssemblySchemaInspector : SchemaInspector
 	public AssemblySchemaInspector(Assembly assembly)
 	{
 		_assembly = assembly;
-		TypeFilter = (type) => true;
+		TypeFilter = (type) => !type.IsAbstract && type.IsPublic;
 	}
 
 	public virtual Func<Type, bool> TypeFilter { get; set; }
