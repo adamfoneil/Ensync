@@ -14,6 +14,8 @@
     <None Remove="EmbeddedCases\UnexpectedUniqueDrop.zip" />
     <None Remove="Resources\appsettings.json" />
     <None Remove="Resources\Ginseng8.dacpac" />
+    <None Remove="Resources\Json\IgnoreList.json" />
+    <None Remove="Resources\Json\ScriptActions.json" />
     <None Remove="Resources\UserVoice.dacpac" />
   </ItemGroup>
 
@@ -22,6 +24,8 @@
     <EmbeddedResource Include="EmbeddedCases\UnexpectedUniqueDrop.zip" />
     <EmbeddedResource Include="Resources\appsettings.json" />
     <EmbeddedResource Include="Resources\Ginseng8.dacpac" />
+    <EmbeddedResource Include="Resources\Json\IgnoreList.json" />
+    <EmbeddedResource Include="Resources\Json\ScriptActions.json" />
     <EmbeddedResource Include="Resources\UserVoice.dacpac" />
   </ItemGroup>
 

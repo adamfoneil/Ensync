@@ -47,7 +47,14 @@ internal class Program
 			var scriptBuilder = new SqlServerScriptBuilder(target.Target.ConnectionString);
 			var script = await source.Schema.CompareAsync(target.Schema, scriptBuilder, o.Debug);
 
-			var executeScript = script.Except(config.Ignore.ToScriptActions());
+			if (!string.IsNullOrWhiteSpace(o.Ignore))
+			{
+				o.ActionName = "Preview";
+				AppendIgnoreObjects(config.Ignore, o.Ignore, script);
+				SaveIgnoreSettings(config.BasePath, config.Ignore);
+			}
+			
+			var executeScript = script.Except(config.Ignore.ToScriptActions()).ToArray();
 			var destructive = executeScript.Where(a => a.IsDestructive);
 			foreach (var action in destructive)
 			{
@@ -72,9 +79,6 @@ internal class Program
 
 				case Action.Script:
 					CreateSqlScript(config.BasePath, statements);
-					break;
-
-				case Action.Ignore:
 					break;
 
 				case Action.CaptureTestCase:
@@ -103,6 +107,34 @@ internal class Program
 		void SetFKParents(Schema schema)
 		{
 			foreach (var fk in schema.ForeignKeys) fk.ParentName = fk.Parent?.Name;
+		}
+	}
+
+	private static void AppendIgnoreObjects(Ignore ignore, string expression, IEnumerable<ScriptAction> script)
+	{
+		var ignoreObjects = script.Where(IsIgnored).SelectMany(action => new ScriptActionKey[]
+		{
+			new ScriptActionKey(ScriptActionType.Create, action.Object.Name, action.Object.Type),
+			new ScriptActionKey(ScriptActionType.Alter, action.Object.Name, action.Object.Type),
+			new ScriptActionKey(ScriptActionType.Drop, action.Object.Name, action.Object.Type)
+		}).ToArray();
+
+		var list = ignore.Actions.ToList();
+		list.AddRange(ignoreObjects);
+		ignore.Actions = list.ToHashSet().ToArray();
+
+		bool IsIgnored(ScriptAction action)
+		{
+			var (objectType, startsWith) = ParseExpression();
+			return (action.Object.Type == objectType && action.Object.Name.StartsWith(startsWith));			
+		}
+
+		(DbObjectType Type, string StartsWith) ParseExpression()
+		{
+			var colon = expression.IndexOf(':');
+			var objType = Enum.Parse<DbObjectType>(expression[..colon], true);
+			var startsWith = expression[(colon + 1)..];
+			return (objType, startsWith);
 		}
 	}
 
@@ -201,22 +233,30 @@ internal class Program
 
 			File.WriteAllText(outputFile, json);
 		}
-
-		outputFile = Path.Combine(basePath, IgnoreFilename);
-		if (!File.Exists(outputFile))
+		
+		if (!File.Exists(GetIgnoreFilename(basePath)))
 		{
 			var ignore = new Ignore()
 			{
 				Actions = new ScriptActionKey[] { new(ScriptActionType.Create, "dbo.Sample", DbObjectType.Table) }
 			};
 
-			var json = JsonSerializer.Serialize(ignore, new JsonSerializerOptions()
-			{
-				WriteIndented = true
-			});
-
-			File.WriteAllText(outputFile, json);
+			SaveIgnoreSettings(basePath, ignore);			
 		}
+	}
+
+	private static string GetIgnoreFilename(string basePath) => Path.Combine(basePath, IgnoreFilename);
+
+	private static void SaveIgnoreSettings(string basePath, Ignore ignore)
+	{
+		var outputFile = GetIgnoreFilename(basePath);
+
+		var json = JsonSerializer.Serialize(ignore, new JsonSerializerOptions()
+		{
+			WriteIndented = true
+		});
+
+		File.WriteAllText(outputFile, json);
 	}
 
 	private static Configuration.Target FindDefaultDatabaseTarget(string basePath)

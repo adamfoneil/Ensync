@@ -40,7 +40,7 @@ public class ScriptAction
 	{
 		if (obj is ScriptAction action)
 		{
-			return action.Action == Action && action.Object == Object;
+			return action.Action == Action && action.Object.Equals(Object);
 		}
 
 		return false;

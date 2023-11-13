@@ -2,7 +2,8 @@
   "profiles": {
     "Ensync.CLI": {
       "commandName": "Project",
-      "commandLineArgs": "--c \"C:\\Users\\adamo\\source\\repos\\EnsyncDemo\\EnsyncDemo\" -a CaptureTestCase"
+      "commandLineArgs": "--ignore Table:dbo.AspNetUser",
+      "workingDirectory": "C:\\Users\\adamo\\source\\repos\\LiteInvoice2\\LiteInvoice.Database"
     }
   }
 }

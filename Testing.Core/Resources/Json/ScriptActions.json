@@ -1,0 +1,103 @@
+[
+    {
+      "Action": 0,
+      "Object": {
+        "ObjectId": 0,
+        "Type": 1,
+        "Name": "dbo.User",
+        "ParentName": null
+      },
+      "Statements": [
+        {},
+        {},
+        {}
+      ],
+      "IsDestructive": false,
+      "Message": null
+    },
+    {
+      "Action": 2,
+      "Object": {
+        "ObjectId": 981578535,
+        "Type": 4,
+        "Name": "FK_AspNetRoleClaims_AspNetRoles_RoleId",
+        "ParentName": null
+      },
+      "Statements": [
+        {}
+      ],
+      "IsDestructive": false,
+      "Message": null
+    },
+    {
+      "Action": 2,
+      "Object": {
+        "ObjectId": 1125579048,
+        "Type": 4,
+        "Name": "FK_AspNetUserRoles_AspNetRoles_RoleId",
+        "ParentName": null
+      },
+      "Statements": [
+        {}
+      ],
+      "IsDestructive": false,
+      "Message": null
+    },
+    {
+      "Action": 2,
+      "Object": {
+        "ObjectId": 1029578706,
+        "Type": 4,
+        "Name": "FK_AspNetUserClaims_AspNetUsers_UserId",
+        "ParentName": null
+      },
+      "Statements": [
+        {}
+      ],
+      "IsDestructive": false,
+      "Message": null
+    },
+    {
+      "Action": 2,
+      "Object": {
+        "ObjectId": 1077578877,
+        "Type": 4,
+        "Name": "FK_AspNetUserLogins_AspNetUsers_UserId",
+        "ParentName": null
+      },
+      "Statements": [
+        {}
+      ],
+      "IsDestructive": false,
+      "Message": null
+    },
+    {
+      "Action": 2,
+      "Object": {
+        "ObjectId": 1125579048,
+        "Type": 4,
+        "Name": "FK_AspNetUserRoles_AspNetUsers_UserId",
+        "ParentName": null
+      },
+      "Statements": [
+        {}
+      ],
+      "IsDestructive": false,
+      "Message": null
+    },
+    {
+      "Action": 2,
+      "Object": {
+        "ObjectId": 1189579276,
+        "Type": 4,
+        "Name": "FK_AspNetUserTokens_AspNetUsers_UserId",
+        "ParentName": null
+      },
+      "Statements": [
+        {}
+      ],
+      "IsDestructive": false,
+      "Message": null
+    }
+  ]
+  
