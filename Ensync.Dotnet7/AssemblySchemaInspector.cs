@@ -119,16 +119,32 @@ public class AssemblySchemaInspector : SchemaInspector
 			MappedProperties(tuple.Type)
 			.Where(pi => pi.HasAttribute<ForeignKeyAttribute>(out _)), (tuple, pi) =>
 			{
-				var referencedTable = tableDictionary[pi.GetCustomAttribute<ForeignKeyAttribute>()!.Name].Table;
-				return new ForeignKey()
+				var referencedTableName = pi.GetCustomAttribute<ForeignKeyAttribute>()!.Name;
+				if (tableDictionary.TryGetValue(referencedTableName, out var referencedTable))
 				{
-					Name = $"FK_{tuple.ConstraintName}_{pi.Name}",
-					Parent = tuple.Table,
-					ReferencedTable = referencedTable,
-					Columns = new[] { new ForeignKey.Column() { ReferencingName = pi.Name, ReferencedName = referencedTable.IdentityColumn } },
-					//CascadeDelete = todo
-					// CascadeUpdate = todo
-				};
+					return new ForeignKey()
+					{
+						Name = $"FK_{tuple.ConstraintName}_{pi.Name}",
+						Parent = tuple.Table,
+						ReferencedTable = referencedTable.Table,
+						Columns = new[] { new ForeignKey.Column() { ReferencingName = pi.Name, ReferencedName = referencedTable.Table.IdentityColumn } },
+						//CascadeDelete = todo
+						// CascadeUpdate = todo
+					};
+				}
+
+				if (StringHelper.TryParseColumnReference(referencedTableName, out var result))
+				{
+					return new ForeignKey()
+					{
+						Name = $"FK_{tuple.ConstraintName}_{pi.Name}",
+						Parent = tuple.Table,
+						ReferencedTable = new Table() { Name = result.TableName },
+						Columns = new[] { new ForeignKey.Column() { ReferencingName = pi.Name, ReferencedName = result.ColumnName } }
+					};
+				}
+
+				throw new Exception($"Couldn't parse foreign key info from: {referencedTableName}");
 			});
 
 		foreignKeys.AddRange(results);
