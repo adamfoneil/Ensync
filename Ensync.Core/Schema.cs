@@ -178,7 +178,10 @@ public class Schema
 
 	private static void DropTables(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
-		results.AddRange(targetSchema.Tables.Except(sourceTables)
+		var droppable = targetSchema.Tables.Except(sourceTables).ToArray();
+		var dropTables = droppable.Where(scriptBuilder.TargetObjectExists).ToArray();
+
+		results.AddRange(dropTables
 			.Where(scriptBuilder.TargetObjectExists)
 			.Select(tbl => new ScriptAction(ScriptActionType.Drop, tbl)
 			{

@@ -99,9 +99,9 @@ public abstract class SqlScriptBuilder
 
 	internal bool TargetObjectExists(DbObject dbObject) => dbObject.Type switch
 	{
-		DbObjectType.Table => Metadata.TableNames.Contains(dbObject.Name),
-		DbObjectType.ForeignKey => Metadata.ForeignKeyNames.Contains(dbObject.Name),
-		DbObjectType.Index => Metadata.IndexNames.Contains(dbObject.Name),
+		DbObjectType.Table => Metadata.TableNames.Contains(dbObject.Name, StringComparer.InvariantCultureIgnoreCase),
+		DbObjectType.ForeignKey => Metadata.ForeignKeyNames.Contains(dbObject.Name, StringComparer.InvariantCultureIgnoreCase),
+		DbObjectType.Index => Metadata.IndexNames.Contains(dbObject.Name, StringComparer.InvariantCultureIgnoreCase),
 		_ => throw new NotImplementedException()
 	};
 
