@@ -65,7 +65,6 @@ public class Schema
 			ndx => ndx, ndx => ndx,
 			(sourceIndex, targetIndex) => (sourceIndex, targetIndex));
 
-
 	private static void DropForeignKeys(List<ScriptAction> results, IEnumerable<ForeignKey> foreignKeys, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
 		results.AddRange(targetSchema.ForeignKeys.Except(foreignKeys)
