@@ -2,7 +2,7 @@
   "profiles": {
     "Ensync.CLI": {
       "commandName": "Project",
-      "commandLineArgs": "--ignore Table:dbo.AspNetUser",
+      "commandLineArgs": "",
       "workingDirectory": "C:\\Users\\adamo\\source\\repos\\LiteInvoice2\\LiteInvoice.Database"
     }
   }
