@@ -36,6 +36,12 @@ public class Column : DbObject
 
 			// original code does another insert, but I don't know why
 			// https://github.com/adamfoneil/ModelSync/blob/master/ModelSync.Library/Models/Column.cs#L131-L135
+
+			var impactedFKs =
+				schema.ForeignKeys.Where(fk => fk.Parent!.Equals(Parent) && fk.Columns.Any(col => col.ReferencingName.Equals(Name)))
+				.ToArray();
+
+			results.AddRange(impactedFKs.Select(fk => ((DbObject?)table, (DbObject)fk)));
 		}
 
 		return results;
