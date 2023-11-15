@@ -176,7 +176,7 @@ public class AssemblySchemaInspector : SchemaInspector
 		{
 			Name = $"{nameParts.Schema}.{nameParts.Name}",
 			IdentityColumn = identityProperty.Name,
-			Columns = BuildColumns(mappedProperties).ToArray(),
+			Columns = BuildColumns(mappedProperties, identityProperty, type).ToArray(),
 			Indexes = BuildIndexes(nameParts.BaseConstraintName, mappedProperties, identityProperty).ToArray(),
 			CheckConstraints = BuildCheckConstraints(type, nameParts.BaseConstraintName).ToArray()
 		}, nameParts.BaseConstraintName);
@@ -201,13 +201,14 @@ public class AssemblySchemaInspector : SchemaInspector
 			pi.CanWrite &&
 			!pi.HasAttribute<NotMappedAttribute>(out _));
 
-	private IEnumerable<Column> BuildColumns(IEnumerable<PropertyInfo> properties)
+	private IEnumerable<Column> BuildColumns(IEnumerable<PropertyInfo> properties, PropertyInfo identityProperty, Type declaringType)
 	{
-		return properties.Select(pi => new Column()
+		return properties.Select((pi, index) => new Column()
 		{
 			Name = GetColumnName(pi),
 			IsNullable = pi.PropertyType.IsNullable() && !pi.HasAttribute<RequiredAttribute>(out _) && !pi.HasAttribute<KeyAttribute>(out _),
-			DataType = GetDataType(pi)
+			DataType = GetDataType(pi),
+			Position = GetPosition(pi, index)
 		});
 
 		string GetColumnName(PropertyInfo pi)
@@ -237,6 +238,19 @@ public class AssemblySchemaInspector : SchemaInspector
 			}
 
 			return result;
+		}
+
+		int GetPosition(PropertyInfo pi, int index)
+		{
+			if (pi.Name.Equals(identityProperty.Name)) return 0;
+
+			if (!pi.DeclaringType?.Equals(declaringType) ?? false)
+			{
+				// properties from base types get moved to the end
+				index += 100;
+			}
+
+			return index + 1;
 		}
 	}
 

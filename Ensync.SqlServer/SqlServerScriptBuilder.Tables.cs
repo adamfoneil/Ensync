@@ -49,7 +49,7 @@ public partial class SqlServerScriptBuilder
 
 		yield return
 ($@"CREATE TABLE {FormatName(table)} (
-{string.Join(",\r\n", table.Columns.Select(col => "\t" + Syntax[DbObjectType.Column].Definition!.Invoke(col)))}
+{string.Join(",\r\n", table.Columns.OrderBy(col => col.Position).Select(col => "\t" + Syntax[DbObjectType.Column].Definition!.Invoke(col)))}
 )", table);
 
 		foreach (var index in table.Indexes)

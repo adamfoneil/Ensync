@@ -13,6 +13,7 @@ public class Column : DbObject
 	/// </summary>
 	public bool IsDefaultRequired { get; init; }
 	public int InternalId { get; init; }
+	public int? Position { get; init; }
 
 	public override (bool Result, string? Message) IsAltered(DbObject compareWith)
 	{

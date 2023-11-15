@@ -138,7 +138,8 @@ public class SqlServerSchemaInspector : SchemaInspector
 						WHEN [ic].[name] IS NOT NULL THEN 1
 						ELSE 0
 					END AS [IsIdentity],
-					[col].[system_type_id]
+					[col].[system_type_id],
+					[col].[column_id] AS [Position]
 				FROM
 					[sys].[columns] [col]
 					INNER JOIN [sys].[tables] [t] ON [col].[object_id]=[t].[object_id]
@@ -169,7 +170,8 @@ public class SqlServerSchemaInspector : SchemaInspector
 				CASE
 					WHEN [IsIdentity]=1 THEN ' identity(1,1)'
 					ELSE NULL
-				END AS [TypeModifier]
+				END AS [TypeModifier],
+				[Position]
 			FROM
 				[source]");
 
