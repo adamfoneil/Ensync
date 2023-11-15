@@ -67,12 +67,17 @@ public class Schema
 
 	private static void DropForeignKeys(List<ScriptAction> results, IEnumerable<ForeignKey> foreignKeys, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
 	{
-		results.AddRange(targetSchema.ForeignKeys.Except(foreignKeys)
+		results.AddRange(
+			targetSchema.ForeignKeys.Except(foreignKeys)
+			.Where(NotAlreadyDropped)
 			.Where(scriptBuilder.TargetObjectExists)
 			.Select(fk => new ScriptAction(ScriptActionType.Drop, fk)
 			{
 				Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, fk.Parent, fk)
 			}));
+
+		bool NotAlreadyDropped(ForeignKey foreignKey) =>
+			!results.Any(scriptAction => scriptAction.Action == ScriptActionType.Drop && scriptAction.Object.Equals(foreignKey.Parent));
 	}
 
 	private static void AlterColumns(List<ScriptAction> results, IEnumerable<Table> tables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
