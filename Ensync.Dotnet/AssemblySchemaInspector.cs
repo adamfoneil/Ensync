@@ -1,13 +1,13 @@
 ﻿using Ensync.Core.Abstract;
 using Ensync.Core.DbObjects;
-using Ensync.Dotnet7.Extensions;
+using Ensync.Dotnet.Extensions;
 using Microsoft.Extensions.DependencyModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using Index = Ensync.Core.DbObjects.Index;
 
-namespace Ensync.Dotnet7;
+namespace Ensync.Dotnet;
 
 public class AssemblySchemaInspector : SchemaInspector
 {

@@ -1,4 +1,4 @@
-﻿namespace Ensync.Dotnet7.Extensions;
+﻿namespace Ensync.Dotnet.Extensions;
 
 public static class StringHelper
 {

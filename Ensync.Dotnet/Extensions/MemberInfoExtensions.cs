@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace Ensync.Dotnet7.Extensions;
+namespace Ensync.Dotnet.Extensions;
 
 internal static class MemberInfoExtensions
 {

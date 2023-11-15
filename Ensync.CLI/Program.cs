@@ -4,7 +4,7 @@ using Ensync.Core;
 using Ensync.Core.Abstract;
 using Ensync.Core.Extensions;
 using Ensync.Core.Models;
-using Ensync.Dotnet7;
+using Ensync.Dotnet;
 using Ensync.SqlServer;
 using Microsoft.Data.SqlClient;
 using System.Diagnostics;
