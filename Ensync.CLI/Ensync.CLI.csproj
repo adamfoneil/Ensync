@@ -14,7 +14,7 @@
 	<IncludeSymbols>True</IncludeSymbols>
 	<PackageId>AO.Ensync</PackageId>
 	<Title>Entity Sync to SQL Server</Title>
-	<Version>1.0.0-alpha</Version>
+	<Version>1.0.1-alpha</Version>
 	<Authors>Adam O'Neil</Authors>
 	<Company>Adam O'Neil</Company>
 	<Description>Code-first entity development without migrations</Description>
