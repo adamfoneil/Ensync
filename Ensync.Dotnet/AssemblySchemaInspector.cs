@@ -294,7 +294,7 @@ public class AssemblySchemaInspector : SchemaInspector
 		}
 	}
 
-	private IEnumerable<CheckConstraint> BuildCheckConstraints(Type type, string constraintName) => Enumerable.Empty<CheckConstraint>();
+	private static IEnumerable<CheckConstraint> BuildCheckConstraints(Type type, string constraintName) => Enumerable.Empty<CheckConstraint>();
 
 	private static Dictionary<Type, string> SupportedTypes
 	{
