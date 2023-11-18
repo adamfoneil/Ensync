@@ -1,4 +1,4 @@
-﻿using Ensync.CLI;
+﻿using Ensync.Core.Extensions;
 using System.Reflection;
 
 namespace Testing.Core;
@@ -10,7 +10,7 @@ public class JsonParse
 	public void FindConnectionString()
 	{
 		var appSettingsJson = new StreamReader(GetResource("Resources.appsettings.json")).ReadToEnd();
-		var connectionInfo = JsonUtil.FindFirstConnectionString(appSettingsJson);
+		var connectionInfo = JsonHelper.FindFirstConnectionString(appSettingsJson);
 		Assert.IsTrue(connectionInfo.ConnectionString!.Equals("Server=(localdb)\\mssqllocaldb;Database=LiteInvoice;Integrated Security=true"));
 	}
 

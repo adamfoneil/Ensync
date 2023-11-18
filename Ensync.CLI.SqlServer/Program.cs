@@ -278,7 +278,7 @@ internal class Program
 			if (appSettings is null) continue;
 
 			var json = File.ReadAllText(appSettings);
-			var connectionInfo = JsonUtil.FindFirstConnectionString(json);
+			var connectionInfo = JsonHelper.FindFirstConnectionString(json);
 			if (connectionInfo.Success)
 			{
 				return new Configuration.Target()

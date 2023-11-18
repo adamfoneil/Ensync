@@ -1,9 +1,9 @@
 ﻿using BlushingPenguin.JsonPath;
 using System.Text.Json;
 
-namespace Ensync.CLI;
+namespace Ensync.Core.Extensions;
 
-public static class JsonUtil
+public static class JsonHelper
 {
 	public static (bool Success, string? Name, string? ConnectionString) FindFirstConnectionString(string settingsJson)
 	{

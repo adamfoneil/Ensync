@@ -12,9 +12,9 @@
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<IncludeSymbols>True</IncludeSymbols>
-	<PackageId>AO.Ensync</PackageId>
+	<PackageId>Ensync.SqlServer</PackageId>
 	<Title>Entity Sync to SQL Server</Title>
-	<Version>1.0.1-alpha</Version>
+	<Version>1.0.2-alpha</Version>
 	<Authors>Adam O'Neil</Authors>
 	<Company>Adam O'Neil</Company>
 	<Description>Code-first entity development without migrations</Description>
@@ -36,6 +36,7 @@
     <Compile Include="..\Ensync.Core\DbObjects\Index.cs" Link="Core\DbObjects\Index.cs" />
     <Compile Include="..\Ensync.Core\DbObjects\Placeholder.cs" Link="Core\DbObjects\Placeholder.cs" />
     <Compile Include="..\Ensync.Core\DbObjects\Table.cs" Link="Core\DbObjects\Table.cs" />
+    <Compile Include="..\Ensync.Core\Extensions\JsonHelper.cs" Link="Core\Extensions\JsonHelper.cs" />
     <Compile Include="..\Ensync.Core\Extensions\PathHelper.cs" Link="Core\Extensions\PathHelper.cs" />
     <Compile Include="..\Ensync.Core\Extensions\ScriptActionExtensions.cs" Link="Core\Extensions\ScriptActionExtensions.cs" />
     <Compile Include="..\Ensync.Core\Models\Configuration.cs" Link="Core\Models\Configuration.cs" />
@@ -68,7 +69,7 @@
     <PackageReference Include="BlushingPenguin.JsonPath" Version="1.0.6" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Dapper" Version="2.1.21" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.0" />
   </ItemGroup>
 
