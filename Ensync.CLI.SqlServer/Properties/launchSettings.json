@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Ensync.CLI": {
+        "commandName": "Project",
+        "commandLineArgs": "",
+        "workingDirectory": "C:\\Users\\adamo\\source\\repos\\EnsyncDemo2\\EnsyncDemo2"
+    }
+  }
+}

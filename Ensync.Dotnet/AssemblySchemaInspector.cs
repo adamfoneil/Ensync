@@ -105,13 +105,13 @@ public class AssemblySchemaInspector : SchemaInspector
 		List<(Type, string)> errors = new();
 
 		AddTables(types, tables, errors);
-		AddForeignKeys(tables, foreignKeys, errors);
+        AddForeignKeys(tables, foreignKeys, errors);
 
 		Errors = errors;
 		return (tables.Select(tuple => tuple.Table), foreignKeys);
 	}
 
-	private void AddForeignKeys(List<(Type Type, Table Table, string ConstraintName)> tables, List<ForeignKey> foreignKeys, List<(Type, string)> errors)
+	private static void AddForeignKeys(List<(Type Type, Table Table, string ConstraintName)> tables, List<ForeignKey> foreignKeys, List<(Type, string)> errors)
 	{
 		var tableDictionary = tables.ToDictionary(tuple => tuple.Type.Name);
 

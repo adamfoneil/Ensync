@@ -41,7 +41,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ensync.CLI\Ensync.CLI.csproj" />
+    <ProjectReference Include="..\Ensync.Core\Ensync.Core.csproj" />
+    <ProjectReference Include="..\Ensync.SqlServer\Ensync.SqlServer.csproj" />
   </ItemGroup>
 
 </Project>
