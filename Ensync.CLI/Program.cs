@@ -314,6 +314,8 @@ internal class Program
 
 	private static async Task<(Configuration.Target Target, string Description, Schema Schema)> GetDbSchemaAsync(Options options, Configuration config, Dictionary<string, Configuration.Target> targets)
 	{
+		if (!config.DatabaseTargets.Any()) throw new Exception("Please create at least one database target.");
+
 		var targetName = options.DbTarget ?? config.DatabaseTargets[0].Name;
 		var target = targets[targetName];
 
