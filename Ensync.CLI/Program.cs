@@ -91,7 +91,7 @@ internal class Program
 						("target.json", target.Schema),
 						("metadata.json", scriptBuilder.Metadata),
 						("statements.json", statements)
-					});
+					}, GetOptions());
 					WriteColorLine("Created zip file test case", ConsoleColor.Green);
 					break;
 
@@ -114,9 +114,9 @@ internal class Program
 	{
 		var ignoreObjects = script.Where(IsIgnored).SelectMany(action => new ScriptActionKey[]
 		{
-			new ScriptActionKey(ScriptActionType.Create, action.Object.Name, action.Object.Type),
-			new ScriptActionKey(ScriptActionType.Alter, action.Object.Name, action.Object.Type),
-			new ScriptActionKey(ScriptActionType.Drop, action.Object.Name, action.Object.Type)
+			new(ScriptActionType.Create, action.Object.Name, action.Object.Type),
+			new(ScriptActionType.Alter, action.Object.Name, action.Object.Type),
+			new(ScriptActionType.Drop, action.Object.Name, action.Object.Type)
 		}).ToArray();
 
 		var list = ignore.Actions.ToList();
@@ -176,7 +176,13 @@ internal class Program
 		output.Close();
 	}
 
-	private static void WriteZipFile(string path, string zipFilename, (string, object)[] contents)
+    private static JsonSerializerOptions GetOptions() =>
+        new()
+        {
+            WriteIndented = true
+        };
+
+    private static void WriteZipFile(string path, string zipFilename, (string, object)[] contents, JsonSerializerOptions options)
 	{
 		var zipPath = Path.Combine(path, zipFilename);
 		if (File.Exists(zipPath)) File.Delete(zipPath);
@@ -188,10 +194,7 @@ internal class Program
 		{
 			var entry = zipFile.CreateEntry(item.Item1);
 			using var entryStream = entry.Open();
-			JsonSerializer.Serialize(entryStream, item.Item2, options: new JsonSerializerOptions()
-			{
-				WriteIndented = true
-			});
+			JsonSerializer.Serialize(entryStream, item.Item2, options: options);
 		}
 	}
 
@@ -478,40 +481,38 @@ internal class Program
 
 		try
 		{
-			using (var cn = new SqlConnection(masterConnection))
-			{
-				cn.Open();
-				if (!SqlServerUtil.DatabaseExists(cn, dbName))
-				{
-					SqlServerUtil.Execute(cn, $"CREATE DATABASE [{dbName}]");
-					int count = 0;
-					do
-					{
-						Thread.Sleep(500);
-						try
-						{
-							using var testCn = new SqlConnection(originalConnectionString);
-							testCn.Open();
-							testCn.Close();
-							return true;
-						}
-						catch
-						{
-							if (count > 10) throw;
-						}
-						count++;
-					} while (true);
-				}
-				cn.Close();
-				return true;
-			}
-		}
+            using var cn = new SqlConnection(masterConnection);
+            cn.Open();
+            if (!SqlServerUtil.DatabaseExists(cn, dbName))
+            {
+                SqlServerUtil.Execute(cn, $"CREATE DATABASE [{dbName}]");
+                int count = 0;
+                do
+                {
+                    Thread.Sleep(500);
+                    try
+                    {
+                        using var testCn = new SqlConnection(originalConnectionString);
+                        testCn.Open();
+                        testCn.Close();
+                        return true;
+                    }
+                    catch
+                    {
+                        if (count > 10) throw;
+                    }
+                    count++;
+                } while (true);
+            }
+            cn.Close();
+            return true;
+        }
 		catch
 		{
 			return false;
 		}
 
-		string NewDatabase(string originalConnectionString, string databaseName)
+        static string NewDatabase(string originalConnectionString, string databaseName)
 		{
 			var parts = ConnectionString.ToDictionary(originalConnectionString);
 			var tokens = new[] { "Initial Catalog", "Database" };

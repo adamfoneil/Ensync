@@ -23,18 +23,62 @@
 	<RepositoryUrl>https://github.com/adamfoneil/Ensync</RepositoryUrl>
 	<PackageTags>code-first; diff-merge sql</PackageTags>
 	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Ensync.Core\Abstract\DbObject.cs" Link="Core\Abstract\DbObject.cs" />
+    <Compile Include="..\Ensync.Core\Abstract\SchemaInspector.cs" Link="Core\Abstract\SchemaInspector.cs" />
+    <Compile Include="..\Ensync.Core\Abstract\SqlScriptBuilder.cs" Link="Core\Abstract\SqlScriptBuilder.cs" />
+    <Compile Include="..\Ensync.Core\DbObjects\CheckConstraint.cs" Link="Core\DbObjects\CheckConstraint.cs" />
+    <Compile Include="..\Ensync.Core\DbObjects\Column.cs" Link="Core\DbObjects\Column.cs" />
+    <Compile Include="..\Ensync.Core\DbObjects\ForeignKey.cs" Link="Core\DbObjects\ForeignKey.cs" />
+    <Compile Include="..\Ensync.Core\DbObjects\Index.cs" Link="Core\DbObjects\Index.cs" />
+    <Compile Include="..\Ensync.Core\DbObjects\Placeholder.cs" Link="Core\DbObjects\Placeholder.cs" />
+    <Compile Include="..\Ensync.Core\DbObjects\Table.cs" Link="Core\DbObjects\Table.cs" />
+    <Compile Include="..\Ensync.Core\Extensions\PathHelper.cs" Link="Core\Extensions\PathHelper.cs" />
+    <Compile Include="..\Ensync.Core\Extensions\ScriptActionExtensions.cs" Link="Core\Extensions\ScriptActionExtensions.cs" />
+    <Compile Include="..\Ensync.Core\Models\Configuration.cs" Link="Core\Models\Configuration.cs" />
+    <Compile Include="..\Ensync.Core\Models\Ignore.cs" Link="Core\Models\Ignore.cs" />
+    <Compile Include="..\Ensync.Core\Schema.cs" Link="Core\Schema.cs" />
+    <Compile Include="..\Ensync.Core\ScriptAction.cs" Link="Core\ScriptAction.cs" />
+    <Compile Include="..\Ensync.Dotnet\AssemblySchemaInspector.cs" Link="Dotnet\AssemblySchemaInspector.cs" />
+    <Compile Include="..\Ensync.Dotnet\Extensions\MemberInfoExtensions.cs" Link="Dotnet\Extensions\MemberInfoExtensions.cs" />
+    <Compile Include="..\Ensync.Dotnet\Extensions\StringHelper.cs" Link="Dotnet\Extensions\StringHelper.cs" />
+    <Compile Include="..\Ensync.Dotnet\Extensions\TypeExtensions.cs" Link="Dotnet\Extensions\TypeExtensions.cs" />
+    <Compile Include="..\Ensync.SqlServer\Internal\ForeignKeyResult.cs" Link="SqlServer\Internal\ForeignKeyResult.cs" />
+    <Compile Include="..\Ensync.SqlServer\Internal\IndexColumnResult.cs" Link="SqlServer\Internal\IndexColumnResult.cs" />
+    <Compile Include="..\Ensync.SqlServer\Internal\IndexKey.cs" Link="SqlServer\Internal\IndexKey.cs" />
+    <Compile Include="..\Ensync.SqlServer\SqlServerSchemaInspector.cs" Link="SqlServer\SqlServerSchemaInspector.cs" />
+    <Compile Include="..\Ensync.SqlServer\SqlServerScriptBuilder.cs" Link="SqlServer\SqlServerScriptBuilder.cs" />
+    <Compile Include="..\Ensync.SqlServer\SqlServerScriptBuilder.ForeignKeys.cs" Link="SqlServer\SqlServerScriptBuilder.ForeignKeys.cs" />
+    <Compile Include="..\Ensync.SqlServer\SqlServerScriptBuilder.Indexes.cs" Link="SqlServer\SqlServerScriptBuilder.Indexes.cs" />
+    <Compile Include="..\Ensync.SqlServer\SqlServerScriptBuilder.Tables.cs" Link="SqlServer\SqlServerScriptBuilder.Tables.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AO.ConnectionStrings" Version="1.0.0" />
     <PackageReference Include="BlushingPenguin.JsonPath" Version="1.0.6" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    <PackageReference Include="Dapper" Version="2.1.21" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ensync.Core\Ensync.Core.csproj" />
-    <ProjectReference Include="..\Ensync.Dotnet\Ensync.Dotnet.csproj" />
-    <ProjectReference Include="..\Ensync.SqlServer\Ensync.SqlServer.csproj" />
+    <Folder Include="Core\Abstract\" />
+    <Folder Include="Core\DbObjects\" />
+    <Folder Include="Core\Extensions\" />
+    <Folder Include="Core\Models\" />
+    <Folder Include="Dotnet\Extensions\" />
+    <Folder Include="SqlServer\Internal\" />
   </ItemGroup>
 
 </Project>

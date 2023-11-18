@@ -10,9 +10,9 @@ public class Config
 		var config = new Configuration()
 		{
 			AssemblyPath = "./bin/Debug/Entities.dll",
-			DatabaseTargets = new[]
-			{
-				new Configuration.Target()
+			DatabaseTargets =
+            [
+                new Configuration.Target()
 				{
 					Name = "Local",
 					Type = "SqlServer",
@@ -24,7 +24,7 @@ public class Config
 					Type = "SqlServer",
 					ConnectionString = "@ConnectionStrings:QA"
 				}
-			}
+			]
 		};
 
 	}
