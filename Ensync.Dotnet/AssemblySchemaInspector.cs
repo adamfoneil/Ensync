@@ -254,7 +254,7 @@ public class AssemblySchemaInspector : SchemaInspector
 		}
 	}
 
-	private IEnumerable<Index> BuildIndexes(string constraintName, IEnumerable<PropertyInfo> mappedProperties, PropertyInfo? identityProperty)
+	private static IEnumerable<Index> BuildIndexes(string constraintName, IEnumerable<PropertyInfo> mappedProperties, PropertyInfo? identityProperty)
 	{
 		IndexType alternateKeyType = IndexType.PrimaryKey;
 
@@ -313,8 +313,8 @@ public class AssemblySchemaInspector : SchemaInspector
 				{ typeof(Guid), "uniqueidentifier" }
 			};
 
-			// help from https://stackoverflow.com/a/23402195/2023653
-			IEnumerable<Type> getBothTypes(Type type)
+            // help from https://stackoverflow.com/a/23402195/2023653
+            static IEnumerable<Type> GetBothTypes(Type type)
 			{
 				yield return type;
 				yield return typeof(Nullable<>).MakeGenericType(type);
@@ -322,7 +322,7 @@ public class AssemblySchemaInspector : SchemaInspector
 
 			var results = nullableBaseTypes.Select(kp => new
 			{
-				Types = getBothTypes(kp.Key),
+				Types = GetBothTypes(kp.Key),
 				SqlType = kp.Value
 			}).SelectMany(item => item.Types.Select(t => new
 			{
