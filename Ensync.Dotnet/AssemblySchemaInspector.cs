@@ -301,8 +301,7 @@ public class AssemblySchemaInspector : SchemaInspector
 		get
 		{
 			var nullableBaseTypes = new Dictionary<Type, string>()
-			{
-				{ typeof(string), "nvarchar" },
+			{				
 				{ typeof(int), "int" },
 				{ typeof(long), "bigint" },
 				{ typeof(short), "smallint" },
@@ -311,8 +310,7 @@ public class AssemblySchemaInspector : SchemaInspector
 				{ typeof(decimal), "decimal" },
 				{ typeof(bool), "bit" },
 				{ typeof(TimeSpan), "time" },
-				{ typeof(Guid), "uniqueidentifier" },
-				{ typeof(byte[]), "varbinary" }
+				{ typeof(Guid), "uniqueidentifier" }				
 			};
 
             // help from https://stackoverflow.com/a/23402195/2023653
@@ -332,7 +330,13 @@ public class AssemblySchemaInspector : SchemaInspector
 				item.SqlType
 			}));
 
-			return results.ToDictionary(item => item.Type, item => item.SqlType);
-		}
+            var result = results.ToDictionary(item => item.Type, item => item.SqlType);
+
+            // string is special in that it's already nullable
+            result.Add(typeof(string), "nvarchar");
+            result.Add(typeof(byte[]), "varbinary");
+
+            return result;
+        }
 	}
 }
