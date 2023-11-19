@@ -49,7 +49,7 @@ public class Index : DbObject
 		public int Order { get; init; }
 	}
 
-	public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema) =>
+	public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema, List<ScriptAction> script) =>
 		(IndexType == IndexType.PrimaryKey || IndexType == IndexType.UniqueConstraint) ?
 			schema.ForeignKeys.Where(
 				fkInfo => fkInfo.ReferencedTable.Equals(Parent) && 

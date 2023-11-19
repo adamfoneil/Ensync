@@ -41,5 +41,5 @@ public abstract class DbObject
 
 	public override string ToString() => $"{Type} {Name}";
 
-	public virtual IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema, IEnumerable<ScriptAction> actions) => Enumerable.Empty<(DbObject? Parent, DbObject Child)>();
+	public virtual IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema, List<ScriptAction> actions) => Enumerable.Empty<(DbObject? Parent, DbObject Child)>();
 }

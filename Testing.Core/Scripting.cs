@@ -24,17 +24,17 @@ public class Scripting
 		var script = actions.ToSqlScript("\r\nGO\r\n", scriptBuilder);
 		Assert.IsTrue(script.Equals(
 @"CREATE TABLE [dbo].[Employee] (
-	[Id] int identity(1,1) NOT NULL,
-	[FirstName] nvarchar(50) NOT NULL,
-	[LastName] nvarchar(50) NOT NULL,
-	[EmployeeTypeId] int NOT NULL
+   [Id] int identity(1,1) NOT NULL,
+   [FirstName] nvarchar(50) NOT NULL,
+   [LastName] nvarchar(50) NOT NULL,
+   [EmployeeTypeId] int NOT NULL
 )
 GO
 ALTER TABLE [dbo].[Employee] ADD CONSTRAINT [PK_Employee] PRIMARY KEY ([Id] ASC)
 GO
 CREATE TABLE [dbo].[EmployeeType] (
-	[Id] int identity(1,1) NOT NULL,
-	[Name] nvarchar(50) NOT NULL
+   [Id] int identity(1,1) NOT NULL,
+   [Name] nvarchar(50) NOT NULL
 )
 GO
 ALTER TABLE [dbo].[Employee] ADD CONSTRAINT [FK_Employee_EmployeeType] FOREIGN KEY ([EmployeeTypeId]) REFERENCES [dbo].[EmployeeType] ([Id]) ON DELETE CASCADE"));

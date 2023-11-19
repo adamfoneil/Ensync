@@ -65,7 +65,7 @@ public class Diffs
 			TableNames = new[] { "dbo.Parent" }.ToHashSet(),
 			ForeignKeyNames = new[] { "FK_Child_Parent" }.ToHashSet()
 		});
-		var statements = scriptBuilder.GetScript(ScriptActionType.Drop, schema, null, parent);
+		var statements = scriptBuilder.GetScript(ScriptActionType.Drop, schema, null, parent, new());
 		Assert.IsTrue(statements.Select(item => item.Item1).SequenceEqual(new[]
 		{
 			"ALTER TABLE [dbo].[Child] DROP CONSTRAINT [FK_Child_Parent]",

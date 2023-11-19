@@ -49,20 +49,20 @@ public abstract class SqlScriptBuilder
 
 	public void SetMetadata(DatabaseMetadata databaseMetadata) => Metadata = databaseMetadata;
 
-	public IEnumerable<(string, DbObject?)> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child, bool debug = false) => actionType switch
+	public IEnumerable<(string, DbObject?)> GetScript(ScriptActionType actionType, Schema schema, DbObject? parent, DbObject child, List<ScriptAction> script, bool debug = false) => actionType switch
 	{
 		ScriptActionType.Create =>
 			Syntax[child.Type].Create.Invoke(parent, child),
 
 		ScriptActionType.Alter =>
-			DropDependencies(Syntax, schema, child, debug)
-			.Concat(Comment(debug, $"alter {child}"))
+			DropDependencies(Syntax, schema, child, script, debug)
+            .Concat(Comment(debug, $"alter {child}"))
 			.Concat(Syntax[child.Type].Alter.Invoke(parent, child))
-			.Concat(CreateDependencies(Syntax, schema, child, debug)),
+			.Concat(CreateDependencies(Syntax, schema, child, debug, script)),
 
 		ScriptActionType.Drop =>
-			DropDependencies(Syntax, schema, child, debug)
-			.Concat(Comment(debug, $"drop {child}"))
+			DropDependencies(Syntax, schema, child, script, debug)
+            .Concat(Comment(debug, $"drop {child}"))
 			.Concat(Syntax[child.Type].Drop.Invoke(parent, child)),
 
 		_ => throw new NotSupportedException()
@@ -73,9 +73,9 @@ public abstract class SqlScriptBuilder
 		if (debug) yield return ($"{LineCommentStart}{text}", null);
 	}
 
-	private IEnumerable<(string, DbObject?)> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child, bool debug)
-	{
-		var results = child.GetDependencies(schema)
+	private IEnumerable<(string, DbObject?)> DropDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child, List<ScriptAction> script, bool debug)
+    {
+		var results = child.GetDependencies(schema, script)
 			.SelectMany(obj => syntax[obj.Child.Type].Drop(obj.Parent, obj.Child))
 			.Where(obj => TargetObjectExists(obj.Item2!))
 			.ToList();
@@ -86,9 +86,9 @@ public abstract class SqlScriptBuilder
 	}
 
 
-	private IEnumerable<(string, DbObject?)> CreateDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child, bool debug)
+	private IEnumerable<(string, DbObject?)> CreateDependencies(Dictionary<DbObjectType, SqlStatements> syntax, Schema schema, DbObject child, bool debug, List<ScriptAction> script)
 	{
-		var results = child.GetDependencies(schema)
+		var results = child.GetDependencies(schema, script)
 			.SelectMany(obj => syntax[obj.Child.Type].Create(obj.Parent, obj.Child))
 			.ToList();
 

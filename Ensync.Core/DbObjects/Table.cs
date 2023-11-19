@@ -20,8 +20,17 @@ public class Table : DbObject
 		return await sourceSchema.CompareAsync(targetSchema, scriptBuilder);
 	}
 
-	public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema) =>
-		schema.ForeignKeys
-			.Where(fk => fk.ReferencedTable.Equals(this))
-			.Select(fk => ((DbObject?)fk.Parent, (DbObject)fk));
+	public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema, List<ScriptAction> script)
+	{
+        var results = schema.ForeignKeys
+            .Where(fk => fk.ReferencedTable.Equals(this) && !AlreadyDropping(fk.Parent))
+            .Select(fk => ((DbObject?)fk.Parent, (DbObject)fk))
+			.ToList();
+
+		return results;
+
+        bool AlreadyDropping(DbObject? @object) =>
+			script.Any(sa => sa.Action == ScriptActionType.Drop && sa.Object.Equals(@object));
+    }
+
 }

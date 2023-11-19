@@ -27,7 +27,7 @@ public class Column : DbObject
 		return (false, default);
 	}
 
-	public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema)
+	public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema, List<ScriptAction> script)
 	{
 		List<(DbObject?, DbObject)> results = new();
 

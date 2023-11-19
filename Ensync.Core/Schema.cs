@@ -40,29 +40,9 @@ public class Schema
 		DropTables(results, Tables, targetSchema, scriptBuilder, debug);
 		DropColumns(results, Tables, targetSchema, scriptBuilder, debug);
 		DropIndexes(results, Tables, targetSchema, scriptBuilder, debug);
-		DropForeignKeys(results, ForeignKeys, targetSchema, scriptBuilder, debug);
-
-		DisableImplicitFKDrops(results, targetSchema);
+		DropForeignKeys(results, ForeignKeys, targetSchema, scriptBuilder, debug);		
 
 		return results;
-	}
-
-	/// <summary>
-	/// an FK drop is "implicit" if its Parent (referencing) table is dropped. In a diff of more
-	/// than one table drop, one of the tables can claim an FK as a dependency that is part of
-	/// a table that's already dropped. Those FK drops need to be removed or it's a script error
-	/// </summary>
-	private void DisableImplicitFKDrops(List<ScriptAction> results, Schema schema)
-	{
-		var dependencyFkDrops = results
-			.SelectMany(sa => sa.Object.GetDependencies(schema).ToArray())
-			.Where(obj => obj.Child.Type == DbObjectType.ForeignKey && IsAlreadyDropping(obj.Parent))
-			.ToArray();
-		
-		//results.RemoveAll()
-
-		bool IsAlreadyDropping(DbObject? @object) =>
-			results.Any(sa => sa.Action == ScriptActionType.Drop && sa.Object.Equals(@object));
 	}
 
 	private static void AlterIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)
@@ -73,7 +53,7 @@ public class Schema
 
 		results.AddRange(alteredIndexes.Select(ndxPair => new ScriptAction(ScriptActionType.Alter, ndxPair.Source)
 		{
-			Statements = scriptBuilder.GetScript(ScriptActionType.Alter, targetSchema, ndxPair.Source.Parent, ndxPair.Source, debug)
+			Statements = scriptBuilder.GetScript(ScriptActionType.Alter, targetSchema, ndxPair.Source.Parent, ndxPair.Source, results, debug)
 		}));
 	}
 
@@ -93,7 +73,7 @@ public class Schema
 			.Where(scriptBuilder.TargetObjectExists)
 			.Select(fk => new ScriptAction(ScriptActionType.Drop, fk)
 			{
-				Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, fk.Parent, fk)
+				Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, fk.Parent, fk, results)
 			}));
 
 		bool NotAlreadyDropped(ForeignKey foreignKey) =>
@@ -107,7 +87,7 @@ public class Schema
 
 		results.AddRange(commonColumns.Where(IsAltered).Select(colPair => new ScriptAction(ScriptActionType.Alter, colPair.Source)
 		{
-			Statements = scriptBuilder.GetScript(ScriptActionType.Alter, targetSchema, colPair.Source.Parent, colPair.Source)
+			Statements = scriptBuilder.GetScript(ScriptActionType.Alter, targetSchema, colPair.Source.Parent, colPair.Source, results)
 		}));
 	}
 
@@ -153,7 +133,7 @@ public class Schema
 		results.AddRange(commonTables.SelectMany(tblPair => tblPair.Source.Indexes.Except(tblPair.Target.Indexes))
 			.Select(ndx => new ScriptAction(ScriptActionType.Create, ndx)
 			{
-				Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, ndx.Parent, ndx, debug),
+				Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, ndx.Parent, ndx, results, debug),
 			}));
 	}
 
@@ -167,7 +147,7 @@ public class Schema
 			.Where(scriptBuilder.TargetObjectExists)
 			.Select(ndx => new ScriptAction(ScriptActionType.Drop, ndx)
 			{
-				Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, ndx.Parent, ndx, debug)
+				Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, ndx.Parent, ndx, results, debug)
 			}));
 
 		static bool IsDrop(ScriptAction action) => action.Action == ScriptActionType.Drop;
@@ -180,7 +160,7 @@ public class Schema
 			.Except(targetSchema.ForeignKeys)
 			.Select(fk => new ScriptAction(ScriptActionType.Create, fk)
 			{
-				Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, fk.Parent, fk, debug)
+				Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, fk.Parent, fk, results, debug)
 			}));
 
 		bool ReferencedTableCreatedOrExists(ForeignKey key)
@@ -196,7 +176,7 @@ public class Schema
 	{
 		results.AddRange(sourceTables.Except(targetSchema.Tables).Select(tbl => new ScriptAction(ScriptActionType.Create, tbl)
 		{
-			Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, null, tbl, debug)
+			Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, null, tbl, results, debug)
 		}));
 	}
 
@@ -211,7 +191,7 @@ public class Schema
 			{
 				IsDestructive = scriptBuilder.Metadata.GetRowCount(tbl.Name) > 0,
 				Message = scriptBuilder.Metadata.GetDropWarning(tbl.Name),
-				Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, null, tbl, debug)
+				Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, null, tbl, results, debug)
 			}));
 	}
 
@@ -221,7 +201,7 @@ public class Schema
 
 		results.AddRange(commonTables.SelectMany(tablePair => tablePair.Source.Columns.Except(tablePair.Target.Columns).Select(col => new ScriptAction(ScriptActionType.Create, col)
 		{
-			Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, tablePair.Source, col, debug)
+			Statements = scriptBuilder.GetScript(ScriptActionType.Create, targetSchema, tablePair.Source, col, results, debug)
 		})));
 	}
 
@@ -233,7 +213,7 @@ public class Schema
 		{
 			IsDestructive = scriptBuilder.Metadata.GetRowCount(tablePair.Target.Name) > 0,
 			Message = scriptBuilder.Metadata.GetDropWarning(tablePair.Target.Name),
-			Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, tablePair.Source, col, debug)
+			Statements = scriptBuilder.GetScript(ScriptActionType.Drop, targetSchema, tablePair.Source, col, results, debug)
 		})));
 	}
 
