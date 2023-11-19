@@ -37,7 +37,7 @@ public class Embedded
 		"DROP TABLE [dbo].[WidgetType]"
 	});
 
-	private async Task TestEmbeddedAsync(string resourceName, IEnumerable<string> shouldGenerateStatements)
+	private static async Task TestEmbeddedAsync(string resourceName, IEnumerable<string> shouldGenerateStatements)
 	{
 		using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName) ?? throw new Exception($"Resource not found: {resourceName}");
 		using var zipFile = new ZipArchive(stream, ZipArchiveMode.Read);
