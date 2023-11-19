@@ -13,7 +13,7 @@ public class Diffs
 {
 	public const string DbName = "EnsyncDemo";
 
-	[ClassInitialize]
+    [ClassInitialize]
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Required by Test Framework")]
 	public static void Startup(TestContext testContext)
 	{
@@ -65,7 +65,7 @@ public class Diffs
 			TableNames = new[] { "dbo.Parent" }.ToHashSet(),
 			ForeignKeyNames = new[] { "FK_Child_Parent" }.ToHashSet()
 		});
-		var statements = scriptBuilder.GetScript(ScriptActionType.Drop, schema, null, parent, new());
+		var statements = scriptBuilder.GetScript(ScriptActionType.Drop, schema, null, parent, []);
 		Assert.IsTrue(statements.Select(item => item.Item1).SequenceEqual(new[]
 		{
 			"ALTER TABLE [dbo].[Child] DROP CONSTRAINT [FK_Child_Parent]",
@@ -257,7 +257,7 @@ public class Diffs
 		var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
 		scriptBuilder.SetMetadata(new DatabaseMetadata()
 		{
-			IndexNames = new[] { "IX_Whatever_Column1" }.ToHashSet()
+			IndexNames = ["IX_Whatever_Column1"]
 		});
 		var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
 		Assert.IsTrue(script.ToSqlStatements(scriptBuilder).SequenceEqual(new[]
@@ -321,7 +321,7 @@ public class Diffs
 		var scriptBuilder = new SqlServerScriptBuilder(LocalDb.GetConnectionString(DbName));
 		scriptBuilder.SetMetadata(new()
 		{
-			IndexNames = new[] { "IX_Hello" }.ToHashSet()
+			IndexNames = ["IX_Hello"]
 		});
 		var script = await sourceTable.CompareAsync(targetTable, scriptBuilder);
 		Assert.IsTrue(script.ToSqlStatements(scriptBuilder).SequenceEqual(new[]

@@ -2,11 +2,11 @@
 
 public class DatabaseMetadata
 {
-	public HashSet<string> Schemas { get; init; } = new();
-	public HashSet<string> TableNames { get; init; } = new();
-	public HashSet<string> ForeignKeyNames { get; init; } = new();
-	public HashSet<string> IndexNames { get; init; } = new();
-	public Dictionary<string, long> RowCounts { get; init; } = new();
+	public HashSet<string> Schemas { get; init; } = [];
+	public HashSet<string> TableNames { get; init; } = [];
+	public HashSet<string> ForeignKeyNames { get; init; } = [];
+	public HashSet<string> IndexNames { get; init; } = [];
+	public Dictionary<string, long> RowCounts { get; init; } = [];
 	public long GetRowCount(string tableName) => RowCounts.TryGetValue(tableName, out var count) ? count : 0;
 
 	internal string? GetDropWarning(string tableName)

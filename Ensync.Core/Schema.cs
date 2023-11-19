@@ -24,7 +24,7 @@ public class Schema
 		SetParents(this);
 		SetParents(targetSchema);
 
-		List<ScriptAction> results = new();
+		List<ScriptAction> results = [];
 
 		AlterColumns(results, Tables, targetSchema, scriptBuilder, debug);
 		AlterIndexes(results, Tables, targetSchema, scriptBuilder, debug);

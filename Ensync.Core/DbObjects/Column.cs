@@ -29,7 +29,7 @@ public class Column : DbObject
 
 	public override IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema, List<ScriptAction> script)
 	{
-		List<(DbObject?, DbObject)> results = new();
+		List<(DbObject?, DbObject)> results = [];
 
 		if (Parent is Table table)
 		{
