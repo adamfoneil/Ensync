@@ -6,6 +6,7 @@ public class Column : DbObject
 {
 	public override DbObjectType Type => DbObjectType.Column;
 	public string DataType { get; init; } = default!;
+	public string? Expression { get; init; } = default!;	
 	public bool IsNullable { get; init; }
 	public string? DefaultValue { get; init; }
 	/// <summary>
@@ -15,11 +16,14 @@ public class Column : DbObject
 	public int InternalId { get; init; }
 	public int? Position { get; init; }
 
+	public bool IsCalculated => !string.IsNullOrEmpty(Expression);
+
 	public override (bool Result, string? Message) IsAltered(DbObject compareWith)
 	{
 		if (compareWith is Column column)
 		{
-			if (!DataType.Equals(column.DataType)) return (true, $"Data type changed from {column.DataType} to {DataType}");
+			if (!Equals(column.Expression, Expression)) return (true, $"Expression changed from {column.Expression} to {Expression}");			
+			if (!Equals(column.DataType, DataType)) return (true, $"Data type changed from {column.DataType} to {DataType}");
 			if (IsNullable != column.IsNullable) return (true, $"Nullability changed from {column.IsNullable} to {IsNullable}");
 			if (DefaultValue != column.DefaultValue) return (true, $"Default value changed from {column.DefaultValue} to {DefaultValue}");
 		}

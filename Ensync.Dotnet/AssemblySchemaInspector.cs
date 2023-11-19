@@ -1,4 +1,5 @@
-﻿using Ensync.Core.Abstract;
+﻿using Ensync.Attributes;
+using Ensync.Core.Abstract;
 using Ensync.Core.DbObjects;
 using Ensync.Dotnet.Extensions;
 using Microsoft.Extensions.DependencyModel;
@@ -100,12 +101,12 @@ public class AssemblySchemaInspector : SchemaInspector
 
 		var types = _assembly.GetExportedTypes().Where(TypeFilter);
 
-		List<(Type Type, Table Table, string ConstraintName)> tables = new();
-		List<ForeignKey> foreignKeys = new();
-		List<(Type, string)> errors = new();
+		List<(Type Type, Table Table, string ConstraintName)> tables = [];
+		List<ForeignKey> foreignKeys = [];
+		List<(Type, string)> errors = [];
 
 		AddTables(types, tables, errors);
-        AddForeignKeys(tables, foreignKeys, errors);
+		AddForeignKeys(tables, foreignKeys, errors);
 
 		Errors = errors;
 		return (tables.Select(tuple => tuple.Table), foreignKeys);
@@ -128,8 +129,8 @@ public class AssemblySchemaInspector : SchemaInspector
 						Parent = tuple.Table,
 						ReferencedTable = referencedTable.Table,
 						Columns = new[] { new ForeignKey.Column() { ReferencingName = pi.Name, ReferencedName = referencedTable.Table.IdentityColumn } },
-						//CascadeDelete = todo
-						// CascadeUpdate = todo
+						CascadeDelete = pi.HasAttribute<CascadeDeleteAttribute>(out _),
+						CascadeUpdate = pi.HasAttribute<CascadeUpdateAttribute>(out _)
 					};
 				}
 
@@ -140,7 +141,9 @@ public class AssemblySchemaInspector : SchemaInspector
 						Name = $"FK_{tuple.ConstraintName}_{pi.Name}",
 						Parent = tuple.Table,
 						ReferencedTable = new Table() { Name = result.TableName },
-						Columns = new[] { new ForeignKey.Column() { ReferencingName = pi.Name, ReferencedName = result.ColumnName } }
+						Columns = new[] { new ForeignKey.Column() { ReferencingName = pi.Name, ReferencedName = result.ColumnName } },
+						CascadeDelete = pi.HasAttribute<CascadeDeleteAttribute>(out _),
+						CascadeUpdate = pi.HasAttribute<CascadeUpdateAttribute>(out _)
 					};
 				}
 
@@ -168,21 +171,21 @@ public class AssemblySchemaInspector : SchemaInspector
 
 	private (Table Table, string ConstraintName) BuildTable(Type type)
 	{
-		var nameParts = GetTableNameParts(type, "dbo");
+		var (Schema, Name, BaseConstraintName) = GetTableNameParts(type, "dbo");
 		var mappedProperties = MappedProperties(type);
 		var identityProperty = mappedProperties.SingleOrDefault(pi => pi.Name.Equals("Id")) ?? throw new Exception($"Entity type {type.Name} missing expected Id property");
 
 		return (new Table()
 		{
-			Name = $"{nameParts.Schema}.{nameParts.Name}",
+			Name = $"{Schema}.{Name}",
 			IdentityColumn = identityProperty.Name,
 			Columns = BuildColumns(mappedProperties, identityProperty, type).ToArray(),
-			Indexes = BuildIndexes(nameParts.BaseConstraintName, mappedProperties, identityProperty).ToArray(),
-			CheckConstraints = BuildCheckConstraints(type, nameParts.BaseConstraintName).ToArray()
-		}, nameParts.BaseConstraintName);
+			Indexes = BuildIndexes(BaseConstraintName, mappedProperties, identityProperty).ToArray(),
+			CheckConstraints = BuildCheckConstraints(type, BaseConstraintName).ToArray()
+		}, BaseConstraintName);
 	}
 
-	private (string Schema, string Name, string BaseConstraintName) GetTableNameParts(Type type, string defaultSchema)
+	private static (string Schema, string Name, string BaseConstraintName) GetTableNameParts(Type type, string defaultSchema)
 	{
 		string name = (type.HasAttribute(out TableAttribute tableAttr)) ? tableAttr.Name : type.Name;
 
@@ -201,13 +204,14 @@ public class AssemblySchemaInspector : SchemaInspector
 			pi.CanWrite &&
 			!pi.HasAttribute<NotMappedAttribute>(out _));
 
-	private IEnumerable<Column> BuildColumns(IEnumerable<PropertyInfo> properties, PropertyInfo identityProperty, Type declaringType)
+	private static IEnumerable<Column> BuildColumns(IEnumerable<PropertyInfo> properties, PropertyInfo identityProperty, Type declaringType)
 	{
 		return properties.Select((pi, index) => new Column()
 		{
 			Name = GetColumnName(pi),
 			IsNullable = pi.PropertyType.IsNullable() && !pi.HasAttribute<RequiredAttribute>(out _) && !pi.HasAttribute<KeyAttribute>(out _),
 			DataType = GetDataType(pi),
+			Expression = GetExpression(pi),
 			Position = GetPosition(pi, index)
 		});
 
@@ -221,6 +225,16 @@ public class AssemblySchemaInspector : SchemaInspector
 			}
 
 			return result;
+		}
+
+		string? GetExpression(PropertyInfo pi)
+		{
+			if (pi.HasAttribute<CalculatedAttribute>(out var attr))
+			{
+				return attr.Expression;
+			}
+
+			return null;
 		}
 
 		string GetDataType(PropertyInfo pi)
@@ -313,8 +327,8 @@ public class AssemblySchemaInspector : SchemaInspector
 				{ typeof(Guid), "uniqueidentifier" }				
 			};
 
-            // help from https://stackoverflow.com/a/23402195/2023653
-            static IEnumerable<Type> GetBothTypes(Type type)
+			// help from https://stackoverflow.com/a/23402195/2023653
+			static IEnumerable<Type> GetBothTypes(Type type)
 			{
 				yield return type;
 				yield return typeof(Nullable<>).MakeGenericType(type);
@@ -330,13 +344,13 @@ public class AssemblySchemaInspector : SchemaInspector
 				item.SqlType
 			}));
 
-            var result = results.ToDictionary(item => item.Type, item => item.SqlType);
+			var result = results.ToDictionary(item => item.Type, item => item.SqlType);
 
-            // string is special in that it's already nullable
-            result.Add(typeof(string), "nvarchar");
-            result.Add(typeof(byte[]), "varbinary");
+			// string is special in that it's already nullable
+			result.Add(typeof(string), "nvarchar");
+			result.Add(typeof(byte[]), "varbinary");
 
-            return result;
-        }
+			return result;
+		}
 	}
 }

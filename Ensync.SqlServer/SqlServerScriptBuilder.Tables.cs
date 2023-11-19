@@ -15,6 +15,11 @@ public partial class SqlServerScriptBuilder
 		var column = @object as Column ?? throw new Exception("Unexpected object type");
 		var table = @object.Parent as Table ?? throw new Exception("Unexpected parent object type");
 
+		if (column.IsCalculated)
+		{
+			return $"[{column.Name}] AS {column.Expression} PERSISTED";
+		}
+
 		var dataType = column.DataType;
 		if (column.Name.Equals(table.IdentityColumn)) dataType += " identity(1,1)";
 		return $"[{column.Name}] {dataType} {(column.IsNullable ? "NULL" : "NOT NULL")}";

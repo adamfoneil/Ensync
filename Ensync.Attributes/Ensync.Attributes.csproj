@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>Ensync.Attributes</PackageId>
+    <Title>Ensync Attributes</Title>
+    <Authors>Adam O'Neil</Authors>
+    <Description>Custom data annotation attributes for Ensync</Description>
+    <Copyright>Copyright (c) 2023 Adam O'Neil</Copyright>
+    <PackageProjectUrl>https://github.com/adamfoneil/Ensync</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/adamfoneil/Ensync</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>symbols.nupkg</SymbolPackageFormat>
+    <Version>8.0.0</Version>
+  </PropertyGroup>
+
+</Project>

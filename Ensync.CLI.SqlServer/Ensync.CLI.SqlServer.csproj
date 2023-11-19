@@ -27,6 +27,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\Ensync.Attributes\Calculated.cs" Link="Dotnet\Attributes\Calculated.cs" />
+    <Compile Include="..\Ensync.Attributes\CascadeDelete.cs" Link="Dotnet\Attributes\CascadeDelete.cs" />
+    <Compile Include="..\Ensync.Attributes\CascadeUpdate.cs" Link="Dotnet\Attributes\CascadeUpdate.cs" />
     <Compile Include="..\Ensync.Core\Abstract\DbObject.cs" Link="Core\Abstract\DbObject.cs" />
     <Compile Include="..\Ensync.Core\Abstract\SchemaInspector.cs" Link="Core\Abstract\SchemaInspector.cs" />
     <Compile Include="..\Ensync.Core\Abstract\SqlScriptBuilder.cs" Link="Core\Abstract\SqlScriptBuilder.cs" />
@@ -78,6 +81,7 @@
     <Folder Include="Core\DbObjects\" />
     <Folder Include="Core\Extensions\" />
     <Folder Include="Core\Models\" />
+    <Folder Include="Dotnet\Attributes\" />
     <Folder Include="Dotnet\Extensions\" />
     <Folder Include="SqlServer\Internal\" />
   </ItemGroup>

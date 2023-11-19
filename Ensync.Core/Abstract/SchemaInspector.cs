@@ -8,12 +8,12 @@ public abstract class SchemaInspector
 
 	public async Task<Schema> GetSchemaAsync()
 	{
-		var objects = await GetDbObjectsAsync();
+		var (Tables, ForeignKeys) = await GetDbObjectsAsync();
 
 		return new()
 		{
-			Tables = objects.Tables,
-			ForeignKeys = objects.ForeignKeys
+			Tables = Tables,
+			ForeignKeys = ForeignKeys
 		};
 	}
 }

@@ -15,7 +15,7 @@ internal static class MemberInfoExtensions
 		return false;
 	}
 
-	public static bool HasAttributeWhere<T>(this MemberInfo memberInfo, Func<T, bool> predicate) where T : Attribute
+    public static bool HasAttributeWhere<T>(this MemberInfo memberInfo, Func<T, bool> predicate) where T : Attribute
 	{
 		var attr = memberInfo.GetCustomAttribute<T>();
 		if (attr is not null)

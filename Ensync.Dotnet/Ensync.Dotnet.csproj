@@ -7,11 +7,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\Ensync.Attributes\Calculated.cs" Link="Attributes\Calculated.cs" />
+    <Compile Include="..\Ensync.Attributes\CascadeDelete.cs" Link="Attributes\CascadeDelete.cs" />
+    <Compile Include="..\Ensync.Attributes\CascadeUpdate.cs" Link="Attributes\CascadeUpdate.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ensync.Core\Ensync.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Attributes\" />
   </ItemGroup>
 
 </Project>
