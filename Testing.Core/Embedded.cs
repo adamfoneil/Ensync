@@ -2,6 +2,7 @@
 using Ensync.Core.Abstract;
 using Ensync.Core.Extensions;
 using Ensync.SqlServer;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO.Compression;
 using System.Reflection;
 using System.Text.Json;
@@ -16,8 +17,8 @@ public class Embedded
 	{
 		"ALTER TABLE [dbo].[WidgetType] ALTER COLUMN [Name] nvarchar(50) NOT NULL",
 		"ALTER TABLE [dbo].[WidgetType] ADD CONSTRAINT [U_WidgetType_Name] UNIQUE ([Name] ASC)",
-        "ALTER TABLE [dbo].[Widget] ADD CONSTRAINT [FK_Widget_TypeId] FOREIGN KEY ([TypeId]) REFERENCES [dbo].[WidgetType] ([Id])"
-    });
+		"ALTER TABLE [dbo].[Widget] ADD CONSTRAINT [FK_Widget_TypeId] FOREIGN KEY ([TypeId]) REFERENCES [dbo].[WidgetType] ([Id])"
+	});
 
 	[TestMethod]
 	public async Task ShouldRebuildFK() => await TestEmbeddedAsync("Testing.Core.EmbeddedCases.ShouldRebuildFK.zip", new[]
@@ -25,6 +26,15 @@ public class Embedded
 		"ALTER TABLE [dbo].[WidgetType] ADD [ParentId] int NOT NULL",
 		"ALTER TABLE [dbo].[WidgetType] ADD CONSTRAINT [U_WidgetType_Name_ParentId] UNIQUE ([Name] ASC, [ParentId] ASC)",		
 		"ALTER TABLE [dbo].[WidgetType] DROP CONSTRAINT [U_WidgetType_Name]"
+	});
+
+	[TestMethod]
+	public async Task RemoveImplicitFKDrops() => await TestEmbeddedAsync("Testing.Core.EmbeddedCases.RemoveImplicitFKDrops.zip", new[]
+	{
+		"CREATE TABLE [dbo].[Customer] (\r\n   [Id] int identity(1,1) NOT NULL,\r\n   [Name] nvarchar(100) NULL\r\n)",
+		"ALTER TABLE [dbo].[Customer] ADD CONSTRAINT [PK_Customer] PRIMARY KEY ([Id] ASC)",
+		"DROP TABLE [dbo].[Widget]",		
+		"DROP TABLE [dbo].[WidgetType]"
 	});
 
 	private async Task TestEmbeddedAsync(string resourceName, IEnumerable<string> shouldGenerateStatements)

@@ -34,7 +34,7 @@ public class ScriptAction
 	/// <summary>
 	/// tells you number rows that will be lost/affected with the drop
 	/// </summary>
-	public string? Message { get; init; }
+	public string? Message { get; init; }	
 
 	public override bool Equals(object? obj)
 	{

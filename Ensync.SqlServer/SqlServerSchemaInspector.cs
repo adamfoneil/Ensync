@@ -237,6 +237,7 @@ public class SqlServerSchemaInspector : SchemaInspector
 			ObjectId = fk.ReferencingObjectId,
 			ReferencedTable = tableDictionary[$"{fk.ReferencedSchema}.{fk.ReferencedTable}"],
 			Parent = tableDictionary[$"{fk.ReferencingSchema}.{fk.ReferencingTable}"],
+			ParentName = $"{fk.ReferencingSchema}.{fk.ReferencingTable}",
 			CascadeDelete = fk.CascadeDelete,
 			CascadeUpdate = fk.CascadeUpdate,
 			Columns = colLookup[fk.ObjectId].Select(fkcol => new ForeignKey.Column()

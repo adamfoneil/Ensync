@@ -42,7 +42,27 @@ public class Schema
 		DropIndexes(results, Tables, targetSchema, scriptBuilder, debug);
 		DropForeignKeys(results, ForeignKeys, targetSchema, scriptBuilder, debug);
 
+		DisableImplicitFKDrops(results, targetSchema);
+
 		return results;
+	}
+
+	/// <summary>
+	/// an FK drop is "implicit" if its Parent (referencing) table is dropped. In a diff of more
+	/// than one table drop, one of the tables can claim an FK as a dependency that is part of
+	/// a table that's already dropped. Those FK drops need to be removed or it's a script error
+	/// </summary>
+	private void DisableImplicitFKDrops(List<ScriptAction> results, Schema schema)
+	{
+		var dependencyFkDrops = results
+			.SelectMany(sa => sa.Object.GetDependencies(schema).ToArray())
+			.Where(obj => obj.Child.Type == DbObjectType.ForeignKey && IsAlreadyDropping(obj.Parent))
+			.ToArray();
+		
+		//results.RemoveAll()
+
+		bool IsAlreadyDropping(DbObject? @object) =>
+			results.Any(sa => sa.Action == ScriptActionType.Drop && sa.Object.Equals(@object));
 	}
 
 	private static void AlterIndexes(List<ScriptAction> results, IEnumerable<Table> sourceTables, Schema targetSchema, SqlScriptBuilder scriptBuilder, bool debug)

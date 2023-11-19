@@ -84,14 +84,14 @@ internal class Program
 				case Action.CaptureTestCase:
 					SetFKParents(source.Schema);
 					SetFKParents(target.Schema);
-					WriteZipFile(config.BasePath, "TestCase.zip", new (string, object)[]
-					{
-						("connection.json", target.Target.ConnectionString),
+					WriteZipFile(config.BasePath, "TestCase.zip",
+                    [
+                        ("connection.json", target.Target.ConnectionString),
 						("source.json", source.Schema),
 						("target.json", target.Schema),
 						("metadata.json", scriptBuilder.Metadata),
 						("statements.json", statements)
-					}, GetOptions());
+					], GetOptions());
 					WriteColorLine("Created zip file test case", ConsoleColor.Green);
 					break;
 
@@ -106,7 +106,10 @@ internal class Program
 
 		void SetFKParents(Schema schema)
 		{
-			foreach (var fk in schema.ForeignKeys) fk.ParentName = fk.Parent?.Name;
+			foreach (var fk in schema.ForeignKeys)
+			{
+				if (fk.ParentName is null) fk.ParentName = fk.Parent?.Name;
+			}
 		}
 	}
 

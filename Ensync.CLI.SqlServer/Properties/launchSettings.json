@@ -2,7 +2,7 @@
   "profiles": {
     "Ensync.CLI": {
         "commandName": "Project",
-        "commandLineArgs": "",
+        "commandLineArgs": "--action CaptureTestCase",
         "workingDirectory": "C:\\Users\\adamo\\source\\repos\\EnsyncDemo2\\EnsyncDemo2"
     }
   }
