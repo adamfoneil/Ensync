@@ -3,7 +3,7 @@ This is a library and command-line tool to merge C# entity classes to SQL Server
 # Getting Started
 1. Install the ensync tool:
 ```
-dotnet tool install -g AO.Ensync
+dotnet tool install -g Ensync.SqlServer
 ```
 2. Navigate to a C# project directory in a command line window and type `ensync` with no arguments.
 
