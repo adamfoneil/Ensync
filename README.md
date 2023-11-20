@@ -1,11 +1,35 @@
+[![Nuget](https://img.shields.io/nuget/v/Ensync.SqlServer)](https://www.nuget.org/packages/Ensync.SqlServer/)
+
 This is a library and command-line tool to merge C# entity classes to SQL Server tables -- code-first entity development without migrations.
 
 # Getting Started
-1. Install the ensync tool:
+1. Install the ensync tool (currently in alpha):
 ```
-dotnet tool install -g Ensync.SqlServer
+dotnet tool install --global Ensync.SqlServer --version 1.0.4-alpha
 ```
-2. Navigate to a C# project directory in a command line window and type `ensync` with no arguments.
+2. Navigate to a C# project directory in a command line window and type `ensync` with no arguments. If it's your first time running, a pair of config files will be created in the root of your project: `ensync.config.json` and `ensync.ignore.json`.
+3. The config file indicates the source assembly that defines your data model along with one or more Sql Server database targets.
+
+<details>
+  <summary>Sample</summary>
+  
+  ```json
+{
+  "AssemblyPath": ".\\bin\\Debug\\net8.0\\LiteInvoice.Database.dll",
+  "DatabaseTargets": [
+    {
+      "Name": "DefaultConnection",
+      "Type": "SqlServer",
+      "ConnectionString": "Server=(localdb)\\mssqllocaldb;Database=LiteInvoiceNet8;Integrated Security=true",
+      "IsProduction": false
+    }
+  ]
+}
+```
+
+</details>
+
+4. As you add and modify your C# entity classes, periodically go to the console and type `ensync` to preview the SQL script of changes that will patch your database. If you're satisfied with the script, type `ensync --merge` to apply the changes.
 
 # Why?
 This is a reboot of my [ModelSync](https://github.com/adamfoneil/ModelSync) project, to break from the NETStandard2 dependency, refactor the diff engine with fresh eyes, and to rebuild all the tooling. The long term vision is to have a WPF app remake of [ModelSync UI](https://aosoftware.net/modelsync/).
