@@ -220,7 +220,7 @@ internal class Program
 	private static Configuration DefaultConfiguration(string basePath) => new Configuration()
 	{
 		AssemblyPath = FindAssemblyPath(basePath),
-		DatabaseTargets = new[] { FindDefaultDatabaseTarget(basePath) }
+		DatabaseTargets = [FindDefaultDatabaseTarget(basePath)]
 	};
 
 	private static void CreateEmptyConfig(string basePath)
@@ -244,7 +244,7 @@ internal class Program
 		{
 			var ignore = new Ignore()
 			{
-				Actions = new ScriptActionKey[] { new(ScriptActionType.Create, "dbo.Sample", DbObjectType.Table) }
+				Actions = [new(ScriptActionType.Create, "dbo.Sample", DbObjectType.Table)]
 			};
 
 			SaveIgnoreSettings(basePath, ignore);			
@@ -311,7 +311,7 @@ internal class Program
 
 		var csprojDoc = XDocument.Load(csproj);
 		var assemblyFileName = csprojDoc.Descendants("AssemblyName").FirstOrDefault()?.Value ?? Path.GetFileNameWithoutExtension(csproj) + ".dll";
-		var targetFramework = csprojDoc.Descendants("TargetFramework").FirstOrDefault()?.Value ?? "net7.0";
+		var targetFramework = csprojDoc.Descendants("TargetFramework").FirstOrDefault()?.Value ?? "net8.0";
 		return $".\\bin\\Debug\\{targetFramework}\\{assemblyFileName}";
 	}
 
