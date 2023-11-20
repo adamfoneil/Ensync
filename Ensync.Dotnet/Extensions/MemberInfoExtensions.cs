@@ -2,7 +2,7 @@
 
 namespace Ensync.Dotnet.Extensions;
 
-internal static class MemberInfoExtensions
+public static class MemberInfoExtensions
 {
 	public static bool HasAttribute<T>(this MemberInfo memberInfo, out T attribute) where T : Attribute
 	{
