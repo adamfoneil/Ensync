@@ -1,9 +1,11 @@
+[![Nuget](https://img.shields.io/nuget/v/Ensync.SqlServer)](https://www.nuget.org/packages/Ensync.SqlServer/)
+
 This is a library and command-line tool to merge C# entity classes to SQL Server tables -- code-first entity development without migrations.
 
 # Getting Started
-1. Install the ensync tool:
+1. Install the ensync tool (currently in alpha):
 ```
-dotnet tool install -g Ensync.SqlServer
+dotnet tool install --global Ensync.SqlServer --version 1.0.4-alpha
 ```
 2. Navigate to a C# project directory in a command line window and type `ensync` with no arguments.
 
