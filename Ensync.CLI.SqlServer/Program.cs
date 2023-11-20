@@ -104,11 +104,11 @@ internal class Program
 			}
 		});
 
-		void SetFKParents(Schema schema)
+        static void SetFKParents(Schema schema)
 		{
 			foreach (var fk in schema.ForeignKeys)
 			{
-				if (fk.ParentName is null) fk.ParentName = fk.Parent?.Name;
+				fk.ParentName ??= fk.Parent?.Name;
 			}
 		}
 	}
@@ -124,7 +124,7 @@ internal class Program
 
 		var list = ignore.Actions.ToList();
 		list.AddRange(ignoreObjects);
-		ignore.Actions = list.ToHashSet().ToArray();
+		ignore.Actions = [.. list];
 
 		bool IsIgnored(ScriptAction action)
 		{
@@ -217,7 +217,7 @@ internal class Program
 		output.Close();
 	}
 
-	private static Configuration DefaultConfiguration(string basePath) => new Configuration()
+	private static Configuration DefaultConfiguration(string basePath) => new()
 	{
 		AssemblyPath = FindAssemblyPath(basePath),
 		DatabaseTargets = [FindDefaultDatabaseTarget(basePath)]
@@ -295,7 +295,7 @@ internal class Program
 
 		return Empty();
 
-		Configuration.Target Empty() => new Configuration.Target()
+        static Configuration.Target Empty() => new()
 		{
 			Type = ConnectionType,
 			ConnectionString = "<add your connection string here>",
@@ -362,8 +362,8 @@ internal class Program
 		};
 
 		var process = Process.Start(psi) ?? throw new Exception($"Couldn't start {psi.FileName}");
-		var output = process.StandardOutput.ReadToEnd();
-		var errors = process.StandardError.ReadToEnd();
+        _ = process.StandardOutput.ReadToEnd();
+        var errors = process.StandardError.ReadToEnd();
 		process.WaitForExit();
 
 		if (!string.IsNullOrWhiteSpace(errors))
