@@ -2,6 +2,8 @@
 
 This is a library and command-line tool to merge C# entity classes to SQL Server tables -- code-first entity development without migrations.
 
+This is a work in progress with a fair bit of missing functionality. I've been dog-fooding it myself on personal projects.
+
 # Getting Started
 1. Install the ensync tool (currently in alpha):
 ```
