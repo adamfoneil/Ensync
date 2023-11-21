@@ -17,7 +17,7 @@ public partial class SqlServerScriptBuilder
         else
         {
             yield return ($"ALTER TABLE {FormatName(parent!)} ALTER COLUMN {ColumnDefinition(child)}", child);
-        }        
+        }
     }
 
     private string ColumnDefinition(DbObject @object)
