@@ -91,7 +91,11 @@ public class Schema
         }));
     }
 
-    private static bool IsAltered((Column Source, Column Target) columnPair) => columnPair.Source.IsAltered(columnPair.Target).Result;
+    private static bool IsAltered((Column Source, Column Target) columnPair)
+    {
+        var result = columnPair.Source.IsAltered(columnPair.Target).Result;
+        return result;
+    }
 
     private static IEnumerable<(Column Source, Column Target)> GetCommonColumns((Table Source, Table Target) tablePair) =>
         tablePair.Source.Columns.Join(

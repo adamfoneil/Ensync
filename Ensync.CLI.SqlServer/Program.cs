@@ -104,7 +104,7 @@ internal class Program
 			}
 		});
 
-        static void SetFKParents(Schema schema)
+		static void SetFKParents(Schema schema)
 		{
 			foreach (var fk in schema.ForeignKeys)
 			{
@@ -295,7 +295,7 @@ internal class Program
 
 		return Empty();
 
-        static Configuration.Target Empty() => new()
+		static Configuration.Target Empty() => new()
 		{
 			Type = ConnectionType,
 			ConnectionString = "<add your connection string here>",
@@ -362,8 +362,8 @@ internal class Program
 		};
 
 		var process = Process.Start(psi) ?? throw new Exception($"Couldn't start {psi.FileName}");
-        _ = process.StandardOutput.ReadToEnd();
-        var errors = process.StandardError.ReadToEnd();
+		_ = process.StandardOutput.ReadToEnd();
+		var errors = process.StandardError.ReadToEnd();
 		process.WaitForExit();
 
 		if (!string.IsNullOrWhiteSpace(errors))

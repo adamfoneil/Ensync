@@ -18,14 +18,22 @@ public class Column : DbObject
 
     public bool IsCalculated => !string.IsNullOrEmpty(Expression);
 
+    private string? CompiledExpression => !string.IsNullOrEmpty(Expression) ? "(" + Expression?.Replace(" ", "") + ")" : null;
+
     public override (bool Result, string? Message) IsAltered(DbObject compareWith)
     {
         if (compareWith is Column column)
         {
-            if (!Equals(column.Expression, Expression)) return (true, $"Expression changed from {column.Expression} to {Expression}");
-            if (!Equals(column.DataType, DataType)) return (true, $"Data type changed from {column.DataType} to {DataType}");
-            if (IsNullable != column.IsNullable) return (true, $"Nullability changed from {column.IsNullable} to {IsNullable}");
-            if (DefaultValue != column.DefaultValue) return (true, $"Default value changed from {column.DefaultValue} to {DefaultValue}");
+            if (IsCalculated)
+            {
+                if (!Equals(column.Expression, CompiledExpression)) return (true, $"Expression changed from {column.Expression} to {Expression}");
+            }
+            else
+            {
+                if (!Equals(column.DataType, DataType)) return (true, $"Data type changed from {column.DataType} to {DataType}");
+                if (IsNullable != column.IsNullable) return (true, $"Nullability changed from {column.IsNullable} to {IsNullable}");
+                if (DefaultValue != column.DefaultValue) return (true, $"Default value changed from {column.DefaultValue} to {DefaultValue}");
+            }
         }
 
         return (false, default);

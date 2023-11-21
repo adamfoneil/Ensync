@@ -24,6 +24,9 @@ public abstract class DbObject
     /// </summary>
     public string? ParentName { get; set; }
 
+    public string FullName => string.Join(".", NameParts);
+    private IEnumerable<string> NameParts => new[] { Parent?.Name ?? string.Empty, Name }.Where(val => !string.IsNullOrEmpty(val));
+
     public virtual (bool Result, string? Message) IsAltered(DbObject compareWith) => (false, null);
 
     public override bool Equals(object? obj)
@@ -31,15 +34,15 @@ public abstract class DbObject
         if (obj is DbObject dbObj)
         {
             if (ObjectId != default && ObjectId == dbObj.ObjectId) return true;
-            return Type == dbObj.Type && Name.Equals(dbObj.Name, StringComparison.OrdinalIgnoreCase);
+            return Type == dbObj.Type && FullName.Equals(dbObj.FullName, StringComparison.OrdinalIgnoreCase);
         }
 
         return false;
     }
 
-    public override int GetHashCode() => $"{Type}.{Name.ToLower()}".GetHashCode();
+    public override int GetHashCode() => $"{Type}:{FullName.ToLower()}".GetHashCode();
 
-    public override string ToString() => $"{Type} {Name}";
+    public override string ToString() => $"{Type} {FullName}";
 
     public virtual IEnumerable<(DbObject? Parent, DbObject Child)> GetDependencies(Schema schema, List<ScriptAction> actions) => Enumerable.Empty<(DbObject? Parent, DbObject Child)>();
 }

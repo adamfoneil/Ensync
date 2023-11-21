@@ -7,7 +7,17 @@ public partial class SqlServerScriptBuilder
 {
     private IEnumerable<(string, DbObject?)> AlterColumn(DbObject? parent, DbObject child)
     {
-        yield return ($"ALTER TABLE {FormatName(parent!)} ALTER COLUMN {ColumnDefinition(child)}", child);
+        var column = child as Column ?? throw new Exception("Unexpected object type");
+
+        if (column.IsCalculated)
+        {
+            yield return ($"ALTER TABLE {FormatName(parent!)} DROP COLUMN {FormatName(child!)}", column);
+            yield return ($"ALTER TABLE {FormatName(parent!)} ADD {ColumnDefinition(child)}", column);
+        }
+        else
+        {
+            yield return ($"ALTER TABLE {FormatName(parent!)} ALTER COLUMN {ColumnDefinition(child)}", child);
+        }        
     }
 
     private string ColumnDefinition(DbObject @object)

@@ -12,16 +12,10 @@ public enum ScriptActionType
 }
 
 [DebuggerDisplay("{Action}: {Object}")]
-public class ScriptAction
+public class ScriptAction(ScriptActionType action, DbObject @object)
 {
-    public ScriptAction(ScriptActionType action, DbObject @object)
-    {
-        Action = action;
-        Object = @object;
-    }
-
-    public ScriptActionType Action { get; init; }
-    public DbObject Object { get; init; }
+    public ScriptActionType Action { get; init; } = action;
+    public DbObject Object { get; init; } = @object;
     /// <summary>
     /// the AffectedObject is usually the Object, but it will be different when the Statement
     /// is dropping or rebuilding a dependency

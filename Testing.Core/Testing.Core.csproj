@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <None Remove="EmbeddedCases\RemoveImplicitFKDrops.zip" />
+    <None Remove="EmbeddedCases\ShouldAddConventionColumns.zip" />
     <None Remove="EmbeddedCases\ShouldRebuildFK.zip" />
     <None Remove="EmbeddedCases\UnexpectedUniqueDrop.zip" />
     <None Remove="Resources\appsettings.json" />
@@ -22,6 +23,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="EmbeddedCases\RemoveImplicitFKDrops.zip" />
+    <EmbeddedResource Include="EmbeddedCases\ShouldAddConventionColumns.zip" />
     <EmbeddedResource Include="EmbeddedCases\ShouldRebuildFK.zip" />
     <EmbeddedResource Include="EmbeddedCases\UnexpectedUniqueDrop.zip" />
     <EmbeddedResource Include="Resources\appsettings.json" />

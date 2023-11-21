@@ -3,7 +3,8 @@
     "Ensync.CLI": {
         "commandName": "Project",
         "commandLineArgs": "",
-        "workingDirectory": "C:\\Users\\adamo\\source\\repos\\LiteInvoice.Net8\\LiteInvoice.Database",
+        "workingDirectory": "C:\\Users\\adamo\\source\\repos\\EnsyncDemo3\\EnsyncDemo3.Database",
+        "workingDirectory2": "C:\\Users\\adamo\\source\\repos\\LiteInvoice.Net8\\LiteInvoice.Database",
         "workingDirectory1": "C:\\Users\\adamo\\source\\repos\\EnsyncDemo2\\EnsyncDemo2"
     }
   }
