@@ -14,6 +14,11 @@ public partial class SqlServerScriptBuilder : SqlScriptBuilder
         _connectionString = connectionString;
     }
 
+    public SqlServerScriptBuilder(DatabaseMetadata metadata) : this("dummy connection")
+    {
+        SetMetadata(metadata);
+    }
+
     public override Dictionary<DbObjectType, SqlStatements> Syntax => new()
     {
         [DbObjectType.Table] = new()

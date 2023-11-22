@@ -7,7 +7,7 @@ This is a work in progress with a fair bit of missing functionality. I've been d
 # Getting Started
 1. Install the ensync tool (currently in alpha):
 ```
-dotnet tool install --global Ensync.SqlServer --version 1.0.7-alpha
+dotnet tool install --global Ensync.SqlServer --version 1.0.8-alpha
 ```
 2. Navigate to a C# project directory in a command line window and type `ensync` with no arguments. If it's your first time running, a pair of config files will be created in the root of your project: `ensync.config.json` and `ensync.ignore.json`. (Take care that you run ensync in a project directory and not the solution directory. You'll get an error if you run in the solution directory because there's usually no buildable project in the solution directory.)
 3. The config file indicates the source assembly that defines your data model along with one or more Sql Server database targets.

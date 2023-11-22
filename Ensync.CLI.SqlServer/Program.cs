@@ -85,8 +85,7 @@ internal class Program
                     SetFKParents(source.Schema);
                     SetFKParents(target.Schema);
                     WriteZipFile(config.BasePath, "TestCase.zip",
-                    [
-                        ("connection.json", target.Target.ConnectionString),
+                    [                        
                         ("source.json", source.Schema),
                         ("target.json", target.Schema),
                         ("metadata.json", scriptBuilder.Metadata),

@@ -61,12 +61,10 @@ public class Embedded
 		var source = GetEntryData<Schema>("source.json");
 		SetFKParents(source);
 		var target = GetEntryData<Schema>("target.json");
-		SetFKParents(target);
-		var connectionString = GetEntryData<string>("connection.json");
+		SetFKParents(target);		
 		var metadata = GetEntryData<DatabaseMetadata>("metadata.json");
 
-		var scriptBuilder = new SqlServerScriptBuilder(connectionString);
-		scriptBuilder.SetMetadata(metadata);
+		var scriptBuilder = new SqlServerScriptBuilder(metadata);		
 		var script = await source.CompareAsync(target, scriptBuilder);
 		var statements = script.ToSqlStatements(scriptBuilder, true);
 
