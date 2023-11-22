@@ -169,7 +169,7 @@ public class AssemblySchemaInspector : SchemaInspector
         }
     }
 
-    private (Table Table, string ConstraintName) BuildTable(Type type)
+    private static (Table Table, string ConstraintName) BuildTable(Type type)
     {
         var (Schema, Name, BaseConstraintName) = GetTableNameParts(type, "dbo");
         var mappedProperties = MappedProperties(type);
