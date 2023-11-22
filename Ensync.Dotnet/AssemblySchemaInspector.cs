@@ -321,6 +321,8 @@ public class AssemblySchemaInspector : SchemaInspector
 				{ typeof(short), "smallint" },
 				{ typeof(byte), "tinyint" },
 				{ typeof(DateTime), "datetime" },
+				{ typeof(DateOnly), "date" },
+				{ typeof(TimeOnly), "time" },
 				{ typeof(decimal), "decimal" },
 				{ typeof(bool), "bit" },
 				{ typeof(TimeSpan), "time" },
