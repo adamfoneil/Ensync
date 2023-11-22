@@ -50,7 +50,7 @@ public class Embedded
 	[
 		"ALTER TABLE [dbo].[OrderLine] ADD [SalesTax] money NOT NULL",
 		"ALTER TABLE [dbo].[OrderLine] DROP COLUMN [ExtendedPrice]",
-		"ALTER TABLE [dbo].[OrderLine] ADD [ExtendedPrice] AS ([Quantity] * [Price]) \u002B [SalesTax] PERSISTED"		
+		"ALTER TABLE [dbo].[OrderLine] ADD [ExtendedPrice] AS ([Quantity] * [Price]) \u002B [SalesTax] PERSISTED"
 	]);
 
 	private static async Task TestEmbeddedAsync(string resourceName, IEnumerable<string> shouldGenerateStatements)
@@ -61,10 +61,10 @@ public class Embedded
 		var source = GetEntryData<Schema>("source.json");
 		SetFKParents(source);
 		var target = GetEntryData<Schema>("target.json");
-		SetFKParents(target);		
+		SetFKParents(target);
 		var metadata = GetEntryData<DatabaseMetadata>("metadata.json");
 
-		var scriptBuilder = new SqlServerScriptBuilder(metadata);		
+		var scriptBuilder = new SqlServerScriptBuilder(metadata);
 		var script = await source.CompareAsync(target, scriptBuilder);
 		var statements = script.ToSqlStatements(scriptBuilder, true);
 

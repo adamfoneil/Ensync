@@ -6,7 +6,7 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage(
-    "Performance",
-    "CA1860:Avoid using 'Enumerable.Any()' extension method",
-    Justification = "Any() is clearer IMO, and is smart enough to try non-enumerated count",
-    Scope = "module")]
+	"Performance",
+	"CA1860:Avoid using 'Enumerable.Any()' extension method",
+	Justification = "Any() is clearer IMO, and is smart enough to try non-enumerated count",
+	Scope = "module")]

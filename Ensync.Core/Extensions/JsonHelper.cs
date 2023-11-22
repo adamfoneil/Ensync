@@ -5,19 +5,19 @@ namespace Ensync.Core.Extensions;
 
 public static class JsonHelper
 {
-    public static (bool Success, string? Name, string? ConnectionString) FindFirstConnectionString(string settingsJson)
-    {
-        var doc = JsonDocument.Parse(settingsJson);
-        var connectionStringElement = doc.SelectTokens("ConnectionStrings")?.FirstOrDefault();
+	public static (bool Success, string? Name, string? ConnectionString) FindFirstConnectionString(string settingsJson)
+	{
+		var doc = JsonDocument.Parse(settingsJson);
+		var connectionStringElement = doc.SelectTokens("ConnectionStrings")?.FirstOrDefault();
 
-        if (connectionStringElement?.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var property in connectionStringElement.Value.EnumerateObject())
-            {
-                return (true, property.Name, property.Value.ToString());
-            }
-        }
+		if (connectionStringElement?.ValueKind == JsonValueKind.Object)
+		{
+			foreach (var property in connectionStringElement.Value.EnumerateObject())
+			{
+				return (true, property.Name, property.Value.ToString());
+			}
+		}
 
-        return (false, default, default);
-    }
+		return (false, default, default);
+	}
 }

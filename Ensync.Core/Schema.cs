@@ -53,7 +53,7 @@ public class Schema
 			{
 				ScriptActionType.Alter => 1,
 				ScriptActionType.Create => 2,
-				ScriptActionType.Drop => 3,                
+				ScriptActionType.Drop => 3,
 				_ => throw new NotSupportedException($"unrecognized action type {action.Action}")
 			};
 		}
