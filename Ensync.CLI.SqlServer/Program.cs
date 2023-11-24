@@ -20,87 +20,96 @@ internal class Program
 	const string ConfigFilename = "ensync.config.json";
 	const string IgnoreFilename = "ensync.ignore.json";
 
+	const string DefaultConnectionString = "<add your connection string here>";
+
 	static async Task Main(string[] args)
 	{
 		await Parser.Default.ParseArguments<Options>(args).WithParsedAsync(async o =>
 		{
 			WriteColorLine($"Ensync version {GetVersion()}", ConsoleColor.Cyan);
 
-			var config = FindConfig(o.ConfigPath);
-
-			if (o.Init)
+			try
 			{
-				CreateEmptyConfig(config.BasePath);
-				return;
+				var config = FindConfig(o.ConfigPath);
+
+				if (o.Init)
+				{
+					CreateEmptyConfig(config.BasePath);
+					return;
+				}
+
+				if (o.Merge) o.ActionName = "Merge";
+				if (o.Script) o.ActionName = "Script";
+
+				var targets = config.Data.DatabaseTargets.ToDictionary(item => item.Name);
+
+				var source = await GetSourceSchemaAsync(o, config.BasePath, config.Data, targets);
+				var target = await GetDbSchemaAsync(o, config.Data, targets);
+				Console.WriteLine($"Merging from {source.Description} to {target.Description}");
+				Console.WriteLine();
+
+				var scriptBuilder = new SqlServerScriptBuilder(target.Target.ConnectionString);
+				var script = await source.Schema.CompareAsync(target.Schema, scriptBuilder, o.Debug);
+
+				if (!string.IsNullOrWhiteSpace(o.Ignore))
+				{
+					o.ActionName = "Preview";
+					AppendIgnoreObjects(config.Ignore, o.Ignore, script);
+					SaveIgnoreSettings(config.BasePath, config.Ignore);
+				}
+
+				var executeScript = script.Except(config.Ignore.ToScriptActions()).ToArray();
+				var destructive = executeScript.Where(a => a.IsDestructive);
+				foreach (var action in destructive)
+				{
+					// todo: prompt in some way
+				}
+
+				var statements = executeScript.ToSqlStatements(scriptBuilder, true).ToArray();
+
+				switch (o.Action)
+				{
+					case Action.Preview:
+						PreviewChanges(statements);
+						if (statements.Any())
+						{
+							WriteColorLine("Use --merge to apply changes to database. Use --debug to show script comments", ConsoleColor.Cyan);
+						}
+						break;
+
+					case Action.Merge:
+						MergeChanges(target.Target, statements);
+						break;
+
+					case Action.Script:
+						CreateSqlScript(config.BasePath, statements);
+						break;
+
+					case Action.CaptureTestCase:
+						SetFKParents(source.Schema);
+						SetFKParents(target.Schema);
+						WriteZipFile(config.BasePath, "TestCase.zip",
+						[
+							("source.json", source.Schema),
+							("target.json", target.Schema),
+							("metadata.json", scriptBuilder.Metadata),
+							("statements.json", statements)
+						], GetOptions());
+						WriteColorLine("Created zip file test case", ConsoleColor.Green);
+						break;
+
+					case Action.Debug:
+						SaveSchemaMarkdown(config.BasePath, "source.md", source.Schema);
+						SaveSchemaMarkdown(config.BasePath, "target.md", target.Schema);
+						CreateSqlScript(config.BasePath, statements);
+						WriteColorLine("Created source.md, target.md, and script.sql", ConsoleColor.Green);
+						break;
+				}
 			}
-
-			if (o.Merge) o.ActionName = "Merge";
-			if (o.Script) o.ActionName = "Script";
-
-			var targets = config.Data.DatabaseTargets.ToDictionary(item => item.Name);
-
-			var source = await GetSourceSchemaAsync(o, config.BasePath, config.Data, targets);
-			var target = await GetDbSchemaAsync(o, config.Data, targets);
-			Console.WriteLine($"Merging from {source.Description} to {target.Description}");
-			Console.WriteLine();
-
-			var scriptBuilder = new SqlServerScriptBuilder(target.Target.ConnectionString);
-			var script = await source.Schema.CompareAsync(target.Schema, scriptBuilder, o.Debug);
-
-			if (!string.IsNullOrWhiteSpace(o.Ignore))
+			catch (Exception exc)
 			{
-				o.ActionName = "Preview";
-				AppendIgnoreObjects(config.Ignore, o.Ignore, script);
-				SaveIgnoreSettings(config.BasePath, config.Ignore);
-			}
-
-			var executeScript = script.Except(config.Ignore.ToScriptActions()).ToArray();
-			var destructive = executeScript.Where(a => a.IsDestructive);
-			foreach (var action in destructive)
-			{
-				// todo: prompt in some way
-			}
-
-			var statements = executeScript.ToSqlStatements(scriptBuilder, true).ToArray();
-
-			switch (o.Action)
-			{
-				case Action.Preview:
-					PreviewChanges(statements);
-					if (statements.Any())
-					{
-						WriteColorLine("Use --merge to apply changes to database. Use --debug to show script comments", ConsoleColor.Cyan);
-					}
-					break;
-
-				case Action.Merge:
-					MergeChanges(target.Target, statements);
-					break;
-
-				case Action.Script:
-					CreateSqlScript(config.BasePath, statements);
-					break;
-
-				case Action.CaptureTestCase:
-					SetFKParents(source.Schema);
-					SetFKParents(target.Schema);
-					WriteZipFile(config.BasePath, "TestCase.zip",
-					[
-						("source.json", source.Schema),
-						("target.json", target.Schema),
-						("metadata.json", scriptBuilder.Metadata),
-						("statements.json", statements)
-					], GetOptions());
-					WriteColorLine("Created zip file test case", ConsoleColor.Green);
-					break;
-
-				case Action.Debug:
-					SaveSchemaMarkdown(config.BasePath, "source.md", source.Schema);
-					SaveSchemaMarkdown(config.BasePath, "target.md", target.Schema);
-					CreateSqlScript(config.BasePath, statements);
-					WriteColorLine("Created source.md, target.md, and script.sql", ConsoleColor.Green);
-					break;
-			}
+				WriteColorLine(exc.Message, ConsoleColor.Red);
+			}			
 		});
 
 		static void SetFKParents(Schema schema)
@@ -297,7 +306,7 @@ internal class Program
 		static Configuration.Target Empty() => new()
 		{
 			Type = ConnectionType,
-			ConnectionString = "<add your connection string here>",
+			ConnectionString = DefaultConnectionString,
 			Name = "default"
 		};
 	}
@@ -460,6 +469,8 @@ internal class Program
 
 	private static void EnsureValidDbTarget(string connectionString)
 	{
+		if (connectionString.Equals(DefaultConnectionString)) throw new NotImplementedException($"It looks like your connection string has not been setup yet in {ConfigFilename}");
+
 		try
 		{
 			Console.WriteLine("Checking database...");
@@ -552,8 +563,15 @@ internal class Program
 			return (config, ignore, path);
 		}
 
-		CreateEmptyConfig(path);
-		return FindConfig(path);
+		if (IsProjectPath(path))
+		{
+			CreateEmptyConfig(path);
+			return FindConfig(path);
+		}
+
+		throw new InvalidOperationException($"{path} is missing a .csproj file. Are you in a solution folder?");
+
+		static bool IsProjectPath(string path) => Directory.GetFiles(path, "*.csproj").Any();		
 	}
 
 	private static void WriteColorLine(string text, ConsoleColor color)
