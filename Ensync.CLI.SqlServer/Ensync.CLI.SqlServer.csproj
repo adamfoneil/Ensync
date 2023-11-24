@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -82,5 +82,9 @@
     <Folder Include="Dotnet\Extensions\" />
     <Folder Include="SqlServer\Internal\" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="&quot;C:\Users\adamo\source\repos\NuGetPush\NuGetPush.CLI\bin\Debug\net8.0\NuGetPush.CLI.exe&quot; --ProjectPath $(ProjectDir)" />
+  </Target>
 
 </Project>
