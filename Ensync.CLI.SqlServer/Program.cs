@@ -143,6 +143,7 @@ internal class Program
 		(DbObjectType Type, string StartsWith) ParseExpression()
 		{
 			var colon = expression.IndexOf(':');
+			if (colon == -1) throw new Exception("Ignore expression should have an object type followed by a colon before the object name to ignore.");
 			var objType = Enum.Parse<DbObjectType>(expression[..colon], true);
 			var startsWith = expression[(colon + 1)..];
 			return (objType, startsWith);
