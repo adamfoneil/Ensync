@@ -20,8 +20,12 @@ public class AssemblySchemaInspector : SchemaInspector
 	/// </summary>
 	private static DependencyContext? _dependencyContext;
 
+	private readonly string? _baseDir;
+
 	public AssemblySchemaInspector(string fileName)
 	{
+		_baseDir = Path.GetDirectoryName(fileName) ?? throw new Exception($"No folder parsed from file name {fileName}");
+
 		if (!File.Exists(fileName)) throw new FileNotFoundException(fileName);
 
 		var depsFile = Path.Combine(
@@ -56,7 +60,7 @@ public class AssemblySchemaInspector : SchemaInspector
 			if (package.Success)
 			{
 				return Assembly.LoadFile(package.Path);
-			}
+			}			
 		}
 
 		return null;
@@ -72,9 +76,10 @@ public class AssemblySchemaInspector : SchemaInspector
 		return (File.Exists(assemblyPath), assemblyPath);
 	}
 
-	private static (bool Success, string Path) GetLocalDll(string name)
+	private (bool Success, string Path) GetLocalDll(string name)
 	{
-		var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{name}.dll");
+		var dir = _baseDir ?? AppDomain.CurrentDomain.BaseDirectory;
+		var path = Path.Combine(dir, $"{name}.dll");
 		return (File.Exists(path), path);
 	}
 
