@@ -9,12 +9,12 @@
     <ToolCommandName>ensync</ToolCommandName>
 	<PackageOutputPath>./nupkg</PackageOutputPath>
 	<AssemblyName>ensync</AssemblyName>
-	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<IncludeSymbols>True</IncludeSymbols>
 	<PackageId>Ensync.SqlServer</PackageId>
 	<Title>Entity Sync to SQL Server</Title>
-	<Version>1.0.9-alpha</Version>
+	<Version>1.0.10-alpha</Version>
 	<Authors>Adam O'Neil</Authors>
 	<Company>Adam O'Neil</Company>
 	<Description>Code-first entity development without migrations</Description>
