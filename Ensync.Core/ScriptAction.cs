@@ -43,6 +43,8 @@ public class ScriptAction(ScriptActionType action, DbObject @object)
 	public override int GetHashCode() => (Action.ToString() + Object.Name).GetHashCode();
 
 	public ScriptActionKey ToScriptActionKey() => new(Action, Object.Name, Object.Type);
+
+	public override string ToString() => $"{Action}: {Object}";
 }
 
 public record ScriptActionKey(ScriptActionType Action, string ObjectName, DbObjectType ObjectType)

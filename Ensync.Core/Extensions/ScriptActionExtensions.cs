@@ -9,4 +9,6 @@ public static class ScriptActionExtensions
 
 	public static string ToSqlScript(this IEnumerable<ScriptAction> actions, string separator, SqlScriptBuilder scriptBuilder, bool allowDestruction = false) =>
 		string.Join(separator, ToSqlStatements(actions, scriptBuilder, allowDestruction));
+
+	public static string[] ToCompactStatements(this IEnumerable<ScriptAction> actions) => actions.Select(sa => sa.ToString()).ToArray();
 }

@@ -2,8 +2,8 @@
   "profiles": {
     "Ensync.CLI": {
         "commandName": "Project",
-        "commandLineArgs": "",
-        "workingDirectory": "C:\\Users\\adamo\\source\\repos\\EnsyncDemo3\\EnsyncDemo3.Database",
+        "commandLineArgs": "-p -f Listing",
+        "workingDirectory": "C:\\Users\\adamo\\source\\repos\\HistoricProps2\\HistoricProps2.Database",
         "workingDirectory2": "C:\\Users\\adamo\\source\\repos\\LiteInvoice.Net8\\LiteInvoice.Database",
         "workingDirectory1": "C:\\Users\\adamo\\source\\repos\\EnsyncDemo2\\EnsyncDemo2"
     }

@@ -50,6 +50,14 @@ internal class Options
 	[Option('g', "ignore", HelpText = "Ignore select objects")]
 	public string Ignore { get; set; } = default!;
 
+	[Option('p', "compact", HelpText = "List object names only, without script detail")]
+	public bool Compact { get; set; }
+
+	[Option('f', "Filter", HelpText = "Script objects where the name contains this text")]
+	public string? Filter { get; set; }
+
+	public bool HasFilter => !string.IsNullOrWhiteSpace(Filter);
+
 	[Option('m', "merge", HelpText = "Executes the merge script. Same as setting action = Merge")]
 	public bool Merge { get; set; }
 

@@ -58,31 +58,32 @@ internal class Program
 					SaveIgnoreSettings(config.BasePath, config.Ignore);
 				}
 
-				var executeScript = script.Except(config.Ignore.ToScriptActions()).ToArray();
+				var executeScript = script.Except(config.Ignore.ToScriptActions()).Where(sa => Filtered(o.Filter, sa)).ToArray();
 				var destructive = executeScript.Where(a => a.IsDestructive);
 				foreach (var action in destructive)
 				{
 					// todo: prompt in some way
 				}
 
-				var statements = executeScript.ToSqlStatements(scriptBuilder, true).ToArray();
+				var sqlStatements = executeScript.ToSqlStatements(scriptBuilder, true).ToArray();
+				var compactStatements = executeScript.ToCompactStatements();
 
 				switch (o.Action)
 				{
 					case Action.Preview:
-						PreviewChanges(statements);
-						if (statements.Any())
+						PreviewChanges(o.Compact ? compactStatements : sqlStatements);
+						if (sqlStatements.Any())
 						{
 							WriteColorLine("Use --merge to apply changes to database. Use --debug to show script comments", ConsoleColor.Cyan);
 						}
 						break;
 
 					case Action.Merge:
-						MergeChanges(target.Target, statements);
+						MergeChanges(target.Target, sqlStatements);
 						break;
 
 					case Action.Script:
-						CreateSqlScript(config.BasePath, statements);
+						CreateSqlScript(config.BasePath, sqlStatements);
 						break;
 
 					case Action.CaptureTestCase:
@@ -93,7 +94,7 @@ internal class Program
 							("source.json", source.Schema),
 							("target.json", target.Schema),
 							("metadata.json", scriptBuilder.Metadata),
-							("statements.json", statements)
+							("statements.json", sqlStatements)
 						], GetOptions());
 						WriteColorLine("Created zip file test case", ConsoleColor.Green);
 						break;
@@ -101,7 +102,7 @@ internal class Program
 					case Action.Debug:
 						SaveSchemaMarkdown(config.BasePath, "source.md", source.Schema);
 						SaveSchemaMarkdown(config.BasePath, "target.md", target.Schema);
-						CreateSqlScript(config.BasePath, statements);
+						CreateSqlScript(config.BasePath, sqlStatements);
 						WriteColorLine("Created source.md, target.md, and script.sql", ConsoleColor.Green);
 						break;
 				}
@@ -119,6 +120,34 @@ internal class Program
 				fk.ParentName ??= fk.Parent?.Name;
 			}
 		}
+	}
+
+	/// <summary>
+	/// public so I could write a test theoretically
+	/// </summary>
+	public static bool Filtered(string? filter, ScriptAction action)
+	{
+		if (string.IsNullOrWhiteSpace(filter)) return true;
+
+		DbObjectType? filterType;
+		string? objectTypeStr = null;
+		string? objectNameStr;
+
+		try
+		{
+			int colonPosition = filter.IndexOf(':');
+			objectNameStr = (colonPosition > -1) ? filter[(colonPosition + 1)..] : filter;
+			objectTypeStr = (colonPosition > -1) ? filter[..colonPosition] : null;
+			filterType = objectTypeStr is not null ? Enum.Parse<DbObjectType>(objectTypeStr) : null;
+		}
+		catch 
+		{
+			throw new Exception($"Unrecognized object type filter: {objectTypeStr}");
+		}
+			
+		return 
+			action.Object.Name.Contains(objectNameStr, StringComparison.InvariantCultureIgnoreCase) && 
+			(action.Object.Type == filterType || filterType is null);
 	}
 
 	private static void AppendIgnoreObjects(Ignore ignore, string expression, IEnumerable<ScriptAction> script)
