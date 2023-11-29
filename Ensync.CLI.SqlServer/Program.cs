@@ -570,6 +570,9 @@ internal class Program
 	private static (Configuration Data, Ignore Ignore, string BasePath) FindConfig(string configPath)
 	{
 		var path = Path.GetFullPath(configPath);
+
+		if (!IsProjectPath(path)) throw new Exception($"{path} is missing a .csproj file. Are you in a solution directory?");
+
 		var configFile = Path.Combine(path, ConfigFilename);
 		var ignoreFile = Path.Combine(path, IgnoreFilename);
 
@@ -592,15 +595,10 @@ internal class Program
 		{
 			return (config, ignore, path);
 		}
-
-		if (IsProjectPath(path))
-		{
-			CreateEmptyConfig(path);
-			return FindConfig(path);
-		}
-
-		throw new InvalidOperationException($"{path} is missing a .csproj file. Are you in a solution folder?");
-
+		
+		CreateEmptyConfig(path);
+		return FindConfig(path);
+		
 		static bool IsProjectPath(string path) => Directory.GetFiles(path, "*.csproj").Any();		
 	}
 
