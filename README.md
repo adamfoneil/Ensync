@@ -1,3 +1,8 @@
+# Update Nov 2024
+I've made a lot of peace with EF Core migrations, so I've largely changed my mind about this project. The reason I don't retire this completely is due to one recurring pain point with EF migrations. There's no good way to *preview* the next migration. You have to add the migration, then decide if you like it. If you don't like it, you must explicitly remove it. I find that unexpected changes can creep in, or expected changes *aren't* included, or the generated code is more complex than I'm expecting, requiring me to stop and analyze it. This adds friction and breaks flow. So, while I don't think I could improve upon the core EF migration tooling directly, I do see an opportunity for a migration *preview* feature that presents a compact view of changes that will be in the *next* migration. I'm not sure that this project could help with that. I'm keeping this around while I figure that out.
+
+---
+
 [![Nuget](https://img.shields.io/nuget/v/Ensync.SqlServer)](https://www.nuget.org/packages/Ensync.SqlServer/)
 
 This is a library and command-line tool to merge C# entity classes to SQL Server tables -- code-first entity development without migrations.
